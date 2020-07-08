@@ -1,6 +1,7 @@
 
 #------Exploratorio Datos Toxinas TPM ------------------------------------------------#
-#
+
+
 library(readxl)
 
 data <- read_excel("Data/totalRsinbajo.xlsx")
