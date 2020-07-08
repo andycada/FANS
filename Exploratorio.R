@@ -3,8 +3,7 @@
 #
 library(readxl)
 
-data <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/totalRsinbajo.xlsx")
-View(data)
+data <- read_excel("Data/totalRsinbajo.xlsx")
 names(data)
 str(data)
 
@@ -77,7 +76,7 @@ layout(1)
 ## Analizo los datos incluyendo la zona menos muestreada (BBB), N muy diferente para las 4 estaciones  ----------------------------------------------------------------
 # BBB: Bahia Brown Bajo
 
-data <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/totalR.xlsx")
+data <- read_excel("Data/totalR.xlsx")
 names(data)
 str(data)
 
@@ -85,7 +84,7 @@ str(data)
 # STX vs Area 
 
 library(sciplot) 
-layout(matrix(c(1:2), 1, 2)) 
+
 bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "µg STX eq/100 g tissue", xlab = "Area")
 
 a1 <- aov(STX ~ Area, data = data, na.action=na.fail) 
@@ -146,11 +145,9 @@ bargraph.CI(season, STX, Organism, data = data,  xlab = "Season", ylab = "µg STX
 bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
 
 
-
-
 ## solo datos de Mejillones 
 
-M <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/MejillonR.xlsx")
+M <- read_excel("Data/MejillonR.xlsx")
 str(M)
 
 bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -166,7 +163,7 @@ layout(1)
 
 #solo datos de cholga 
 
-C <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/cholgaR.xlsx")
+C <- read_excel("Data/cholgaR.xlsx")
 str(C)
 
 bargraph.CI(Area, STX, data = C,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -180,7 +177,7 @@ layout(1)
 
 # solo datos de BBE para comparar cholga vs mejillon 
 
-BBE <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/BBE-R.xlsx")
+BBE <- read_excel("Data/BBE-R.xlsx")
 str(BBE)
 
 bargraph.CI(organism, STX, data = BBE,  xlab = "Organism", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -196,7 +193,7 @@ layout(1)
 ## analisis de STX vs organimsmo por season (x separado)---------------#
 
 # winter
-W <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/winterR.xlsx")
+W <- read_excel("Data/winterR.xlsx")
 str(W)
 
 bargraph.CI(organism, STX, data = W, xlab = "Winter", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -213,7 +210,7 @@ plot(a0, 1:6)
 layout(1)
 
 # autumn
-A <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/autumnR.xlsx")
+A <- read_excel("Data/autumnR.xlsx")
 str(A)
 
 bargraph.CI(organism, STX, data = A, xlab = "Autumn", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -227,7 +224,7 @@ layout(1)
   
 # summer
 
-S <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/summerR.xlsx")
+S <- read_excel("Data/summerR.xlsx")
 str(S)
 
 bargraph.CI(organism, STX, data = S, xlab = "Summer", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -242,7 +239,7 @@ layout(1)
 
 # spring
 
-SP <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/springR.xlsx")
+SP <- read_excel("Data/springR.xlsx")
 str(SP)
 
 bargraph.CI(organism, STX, data = SP, xlab = "Spring", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -289,7 +286,7 @@ layout(1)
 # Duration: duracion de la veda, T desde q el mejillon supera los 80 µg STX/100 g tejido, hasta que tiene valores por debajo de ese umbral
 
 library(readxl)
-data2 <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/eventos toxicos y duracion.xlsx")
+data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 names(data2)
 
 bargraph.CI(Duration,STXmax,Organism, data = data2,  ylab = "µg STX eq/100 g tissue", xlab = "Days", col = "steelblue4")
@@ -330,7 +327,7 @@ layout(1)
 # solo BBE (para ver si hay diferencias entre cholga y mejillon en esa area de cultivo q presenta las 2 especies juntas)
 
 library(readxl)
-BBE2 <- read_excel("Doctorado 2018/MODELOS/ARCHIVOS ANDY/eventos toxicos y duracion solo BBE.xlsx")
+BBE2 <- read_excel("Data/eventos toxicos y duracion solo BBE.xlsx")
 
 a11 <- aov(log(Duration) ~ Organism, data = BBE2, na.action=na.fail) 
 summary(a11) # No dif sig en el tiempo de detoxificacion para cholgas y mejillones en BBE 

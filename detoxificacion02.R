@@ -6,25 +6,25 @@
 library(readxl)
 
 #BE cholga y mejillon
-BEC1 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEC1.xlsx")
-BEC2 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEC2.xlsx")
-BEC3 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEC3.xlsx")
-BEC4 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEC4.xlsx")
-BEM1 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEM1.xlsx")
-BEM2 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEM2.xlsx")
-BEM3 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEM3.xlsx")
-BEM4 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEM4.xlsx")
-BEM5 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BEM5.xlsx")
+BEC1 <- read_excel("Data/BEC1.xlsx")
+BEC2 <- read_excel("Data/BEC2.xlsx")
+BEC3 <- read_excel("Data/BEC3.xlsx")
+BEC4 <- read_excel("Data/BEC4.xlsx")
+BEM1 <- read_excel("Data/BEM1.xlsx")
+BEM2 <- read_excel("Data/BEM2.xlsx")
+BEM3 <- read_excel("Data/BEM3.xlsx")
+BEM4 <- read_excel("Data/BEM4.xlsx")
+BEM5 <- read_excel("Data/BEM5.xlsx")
 
 #B fondo mejillon
-BFM1 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BFM1.xlsx")
-BFM2 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BFM2.xlsx")
-BFM3 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/BFM3.xlsx")
+BFM1 <- read_excel("Data/BFM1.xlsx")
+BFM2 <- read_excel("Data/BFM2.xlsx")
+BFM3 <- read_excel("Data/BFM3.xlsx")
 
 #PP mejillon
 
-PPM1 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/PPM1.xlsx")
-PPM2 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/PPM2.xlsx")
+PPM1 <- read_excel("Data/PPM1.xlsx")
+PPM2 <- read_excel("Data/PPM2.xlsx")
 
 
 # modelos GAMs (curvas de detoxificacion separadas por evento toxico, organismo y area)
@@ -95,7 +95,7 @@ gam.check(model8) #pocas observaciones no lo hace
 # Uso los datos totales, sin separar por evento toxico, saco las curvas de 5-8 observaciones para ver si mejora el ajuste 
 
 library(readxl)
-DETOX2 <- read_excel("Doctorado 2018/MODELOS/GAMS/DETOX BE/DETOX-filtrado.xlsx")
+DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 
 names(DETOX2)
 str(DETOX2)
