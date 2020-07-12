@@ -32,6 +32,11 @@ layout(matrix(c(1:6), 2, 3))
 plot(a1, 1:6) # no parece mejorar cn transformacion log 
 layout(1)
 
+# Prueba de Kruskal-Wallis para dos o más muestras independientes
+#no-parametrica, no asume normalidad pero si homocedasticidad
+
+k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
+k1 #p-value < 2.2e-16
 
 a2 <- aov(STX ~ season, data = data, na.action=na.fail) 
 summary(a2)
@@ -42,6 +47,9 @@ layout(matrix(c(1:6), 2, 3))
 plot(a2, 1:6) # no parece mejorar cn transformacion log
 layout(1)
 
+k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
+k2 #p-value < 2.2e-16
+
 
 library(sciplot)
 bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -49,7 +57,7 @@ bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "µg STX eq/
 bargraph.CI(Area, STX, season, data = data,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
 
 
-a3 <- aov(log(STX +1) ~ Area*season, data = data) 
+a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
 summary(a3)
 
 TukeyHSD(a3,"Area:season")
@@ -60,17 +68,22 @@ layout(matrix(c(1:6), 2, 3))
 plot(a3, 1:6) 
 layout(1)
 
+
+
 # STX vs organism 
 
 bargraph.CI(Organism, STX, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE)
 
-a4 <- aov(STX  ~ Organism, data = data) 
-summary(a4) # no hay dif en los niveles de STX segun el organismo PERO EL N ES MUY DIFERENTE
+a4 <- aov(log(STX +1)  ~ Organism, data = data) 
+summary(a4) 
 
 # residuales 
 layout(matrix(c(1:6), 2, 3)) 
 plot(a4, 1:6) # residuales horribles
 layout(1)
+
+t.test(STX ~ Organism, data = data, na.action=na.fail)# Welch Two Sample t-test, p-value = 0.01058 
+
 
 #-----------------------------------------------#
 
@@ -97,6 +110,9 @@ layout(matrix(c(1:6), 2, 3))
 plot(a1, 1:6) 
 layout(1)
 
+k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
+k1 #p-value < 2.2e-16
+
 # STX vs Season
 
 bargraph.CI(season,STX, data = data, ylim= c(0, 400), ylab = "µg STX eq/100 g tissue", xlab = "Season")
@@ -110,6 +126,9 @@ layout(matrix(c(1:6), 2, 3))
 plot(a2, 1:6) 
 layout(1)
 
+k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
+k2 #p-value < 2.2e-16
+
 # anova factorial a dos factores cruzados (area y season)
 
 library(sciplot)
@@ -118,7 +137,7 @@ bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "µg STX eq/
 bargraph.CI(Area, STX, season, data = data, ylim =c(0,800), xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=850, ncol=1)
 
 
-a3 <- aov(STX ~ Area*season, data = data) 
+a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
 summary(a3)
 
 TukeyHSD(a3,"Area:season")
@@ -128,18 +147,20 @@ layout(matrix(c(1:6), 2, 3))
 plot(a3, 1:6) 
 layout(1)
 
+
 # STX vs organism ---------------------
 
-bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = "Season")
+bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = "Organism")
 
 a4 <- aov(STX ~ Organism, data = data) 
-summary(a4) # no hay df en la toxicidad en relacion al organismo 
+summary(a4) #  dif sig en la toxicidad en relacion al organismo, dats muy heterogneos
 
 # residuales 
-layout(matrix(c(1:6), 2, 3)) 
+layout(matrix(c(1:6), 2, 3)) #residuales horribles incluso cn transformacion
 plot(a4, 1:6) 
 layout(1)
 
+t.test(STX ~ Organism, data = data, na.action=na.fail)# p-value = 0.1607
 
 bargraph.CI(season, STX, Organism, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE, x.leg=0.5, y.leg=500, ncol=1)
 
@@ -148,7 +169,7 @@ bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "µg STX eq
 
 ## solo datos de Mejillones 
 
-M <- read_excel("Data/MejillonR.xlsx")
+M <- read_excel("Data/mejillonR.xlsx")
 str(M)
 
 bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -161,6 +182,10 @@ TukeyHSD(a6,"Area") #dif sig en los mejillones (BBE> PP> BBF)
 layout(matrix(c(1:6), 2, 3)) 
 plot(a6, 1:6) 
 layout(1)
+
+k6<-kruskal.test(STX ~ Area, data = M, na.action=na.fail)
+k6 # p-value = 2.721e-08
+
 
 #solo datos de cholga 
 
@@ -176,6 +201,10 @@ layout(matrix(c(1:6), 2, 3))
 plot(a7, 1:6) 
 layout(1)
 
+k7<-kruskal.test(STX ~ Area, data = C, na.action=na.fail)
+k7 # p-value = 1.761e-12
+
+
 # solo datos de BBE para comparar cholga vs mejillon 
 
 BBE <- read_excel("Data/BBE-R.xlsx")
@@ -190,6 +219,7 @@ layout(matrix(c(1:6), 2, 3))
 plot(a8, 1:6) 
 layout(1)
 
+t.test(STX ~ organism, data = BBE, na.action=na.fail)# p-value = 0.9054
 
 ## analisis de STX vs organimsmo por season (x separado)---------------#
 
@@ -206,15 +236,21 @@ a0 <- aov(log (STX + 1) ~ organism, data = W) #  significativos
 summary(a0)
 
 
-layout(matrix(c(1:6), 2, 3)) # residuales horribles
+layout(matrix(c(1:6), 2, 3)) # residuales horrible, no normalidad
 plot(a0, 1:6) 
 layout(1)
+
+t.test(STX ~ organism, data = W, na.action=na.fail)# p-value = 0.01044
+
 
 # autumn
 A <- read_excel("Data/autumnR.xlsx")
 str(A)
 
 bargraph.CI(organism, STX, data = A, xlab = "Autumn", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+
+a1 <- aov(log(STX + 1) ~ organism, data = A) #  significativos
+summary(a1)
 
 a1 <- aov(STX ~ organism, data = A) #  significativos
 summary(a1)
@@ -223,6 +259,9 @@ layout(matrix(c(1:6), 2, 3)) # residuales horribles
 plot(a1, 1:6) 
 layout(1)
   
+t.test(STX ~ organism, data = A, na.action=na.fail)# p-value = 0.01064
+
+
 # summer
 
 S <- read_excel("Data/summerR.xlsx")
@@ -233,10 +272,14 @@ bargraph.CI(organism, STX, data = S, xlab = "Summer", ylab = "µg STX eq/100 g ti
 a2 <- aov(STX  ~ organism, data = S) # no significativo
 summary(a2)
 
+a2 <- aov(log(STX + 1)  ~ organism, data = S) # no significativo
+summary(a2)
 
 layout(matrix(c(1:6), 2, 3)) 
 plot(a2, 1:6) 
 layout(1)
+
+t.test(STX ~ organism, data = S, na.action=na.fail)# p-value = 0.25
 
 # spring
 
@@ -248,11 +291,15 @@ bargraph.CI(organism, STX, data = SP, xlab = "Spring", ylab = "µg STX eq/100 g t
 a3 <- aov(STX ~ organism, data = SP) # no significativo
 summary(a3)
 
+a3 <- aov(log(STX +1) ~ organism, data = SP) # no significativo
+summary(a3)
 
 layout(matrix(c(1:6), 2, 3)) 
 plot(a3, 1:6) 
 layout(1)
 
+
+t.test(STX ~ organism, data = SP, na.action=na.fail)# p-value = 0.058
 
 # dif entre medias anuales ---------------------------------#
 bargraph.CI(Year, STX, data = data,  xlab = "Year", ylab = "µg STX eq/100 g tissue", legend = TRUE)
@@ -290,7 +337,7 @@ library(readxl)
 data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 names(data2)
 
-bargraph.CI(Duration,STXmax,Organism, data = data2,  ylab = "µg STX eq/100 g tissue", xlab = "Days", col = "steelblue4")
+bargraph.CI(Duration,STXmax,Organism, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend = TRUE, x.leg=0, y.leg=500)
 
 a8 <- aov(log(Duration) ~ Organism, data = data2, na.action=na.fail) 
 summary(a8) # la duracion del evento toxico depende del organismo? no dif sig en la duracion del evento toxico segun el organismo
@@ -298,6 +345,8 @@ summary(a8) # la duracion del evento toxico depende del organismo? no dif sig en
 layout(matrix(c(1:6), 2, 3)) # residuales parecen mejorar cn el log
 plot(a8, 1:6) 
 layout(1)
+
+bargraph.CI(Duration,STXmax,Season, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=500)
 
 
 a9 <- aov(log(Duration) ~ Season, data = data2, na.action=na.fail) 
@@ -309,6 +358,8 @@ TukeyHSD(a9,"Season") # summer - autumn mismo grupo y diferente de spring - wint
 layout(matrix(c(1:6), 2, 3)) 
 plot(a9, 1:6) # residuales parecen mejorar cn el log
 layout(1)
+
+bargraph.CI(Duration,STXmax,Area, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=600)
 
 a10 <- aov(log(Duration) ~ Area, data = data2, na.action=na.fail) 
 summary(a10) # no dif sig en la duracion del evento toxico segun el area 
