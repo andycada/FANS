@@ -13,14 +13,34 @@ str(data)
 
 # graficos sin incluir  la zona menos muestreada (BBB) -------------------------#
 
+library(tidyverse)
+
+d_sorted <- data %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
+
+ggplot(d_sorted, aes(x = season, y = STX,color=season)) +
+  coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
+  geom_jitter(size = 2, alpha = 0.25, width = 0.2)+ theme_bw()
+
+
+ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
+  coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
+  geom_jitter(size = 2, alpha = 0.25, width = 0.2)  + theme_bw()
+
+
+require(fitdistrplus)
+descdist(data$STX, boot=1000)
+
 
 # STX vs Area, Season 
 
 library(sciplot) 
-bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "µg STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
+bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "?g STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
 
 
-bargraph.CI(season,STX, data = data, ylim= c(0, 700), ylab = "µg STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
+bargraph.CI(season,STX, data = data, ylim= c(0, 700), ylab = "?g STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
+
+
 
 # ANOVAS
 a1 <- aov(STX ~ Area, data = data, na.action=na.fail) 
@@ -32,7 +52,7 @@ layout(matrix(c(1:6), 2, 3))
 plot(a1, 1:6) # no parece mejorar cn transformacion log 
 layout(1)
 
-# Prueba de Kruskal-Wallis para dos o más muestras independientes
+# Prueba de Kruskal-Wallis para dos o m?s muestras independientes
 #no-parametrica, no asume normalidad pero si homocedasticidad
 
 k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
@@ -52,9 +72,9 @@ k2 #p-value < 2.2e-16
 
 
 library(sciplot)
-bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
-bargraph.CI(Area, STX, season, data = data,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Area, STX, season, data = data,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 
 a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
@@ -72,7 +92,7 @@ layout(1)
 
 # STX vs organism 
 
-bargraph.CI(Organism, STX, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Organism, STX, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a4 <- aov(log(STX +1)  ~ Organism, data = data) 
 summary(a4) 
@@ -99,7 +119,7 @@ str(data)
 
 library(sciplot) 
 
-bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "µg STX eq/100 g tissue", xlab = "Area")
+bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "?g STX eq/100 g tissue", xlab = "Area")
 
 a1 <- aov(STX ~ Area, data = data, na.action=na.fail) 
 summary(a1)
@@ -128,7 +148,7 @@ k1 #p-value < 2.2e-16
 
 # STX vs Season
 
-bargraph.CI(season,STX, data = data, ylim= c(0, 400), ylab = "µg STX eq/100 g tissue", xlab = "Season")
+bargraph.CI(season,STX, data = data, ylim= c(0, 400), ylab = "?g STX eq/100 g tissue", xlab = "Season")
 
 a2 <- aov(log(STX + 1) ~ season, data = data, na.action=na.fail) 
 summary(a2)
@@ -154,9 +174,9 @@ k2 #p-value < 2.2e-16
 # anova factorial a dos factores cruzados (area y season)
 
 library(sciplot)
-bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", col = c("steelblue1", "steelblue4"), legend = TRUE)
+bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", col = c("steelblue1", "steelblue4"), legend = TRUE)
 
-bargraph.CI(Area, STX, season, data = data, ylim =c(0,800), xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=850, ncol=1)
+bargraph.CI(Area, STX, season, data = data, ylim =c(0,800), xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=850, ncol=1)
 
 
 a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
@@ -172,7 +192,7 @@ layout(1)
 
 # STX vs organism ---------------------
 
-bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = "Organism")
+bargraph.CI(Organism,STX, data = data, ylab = "?g STX eq/100 g tissue", xlab = "Organism")
 
 a4 <- aov(STX ~ Organism, data = data) 
 summary(a4) #  no dif sig en la toxicidad en relacion al organismo, dats muy heterogneos
@@ -184,9 +204,9 @@ layout(1)
 
 t.test(STX ~ Organism, data = data, na.action=na.fail)# p-value = 0.1607
 
-bargraph.CI(season, STX, Organism, data = data,  xlab = "Season", ylab = "µg STX eq/100 g tissue", legend = TRUE, x.leg=0.5, y.leg=500, ncol=1)
+bargraph.CI(season, STX, Organism, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0.5, y.leg=500, ncol=1)
 
-bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 
 ## solo datos de Mejillones 
@@ -194,7 +214,7 @@ bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "µg STX eq
 M <- read_excel("Data/mejillonR.xlsx")
 str(M)
 
-bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a6 <- aov(STX ~ Area, data = M) # niveles de STX son sifnificativamente diferentes enlas 3 zonas q tienen mejillon 
 summary(a6)
@@ -214,7 +234,7 @@ k6 # p-value = 2.721e-08
 C <- read_excel("Data/cholgaR.xlsx")
 str(C)
 
-bargraph.CI(Area, STX, data = C,  xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Area, STX, data = C,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a7 <- aov(STX ~ Area, data = C) # niveles de STX son sig diferentes en las 2 zonas q tienen cholga (BBE> BBB)
 summary(a7)
@@ -232,7 +252,7 @@ k7 # p-value = 1.761e-12
 BBE <- read_excel("Data/BBE-R.xlsx")
 str(BBE)
 
-bargraph.CI(organism, STX, data = BBE,  xlab = "Organism", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(organism, STX, data = BBE,  xlab = "Organism", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a8 <- aov(STX ~ organism, data = BBE) 
 summary(a8) # no hay dif en los valores de STX en el producto en la BBE
@@ -249,7 +269,7 @@ t.test(STX ~ organism, data = BBE, na.action=na.fail)# p-value = 0.9054
 W <- read_excel("Data/winterR.xlsx")
 str(W)
 
-bargraph.CI(organism, STX, data = W, xlab = "Winter", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(organism, STX, data = W, xlab = "Winter", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a0 <- aov(STX ~ organism, data = W) #  significativos
 summary(a0)
@@ -269,7 +289,7 @@ t.test(STX ~ organism, data = W, na.action=na.fail)# p-value = 0.01044
 A <- read_excel("Data/autumnR.xlsx")
 str(A)
 
-bargraph.CI(organism, STX, data = A, xlab = "Autumn", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(organism, STX, data = A, xlab = "Autumn", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a1 <- aov(log(STX + 1) ~ organism, data = A) #  significativos
 summary(a1)
@@ -289,7 +309,7 @@ t.test(STX ~ organism, data = A, na.action=na.fail)# p-value = 0.01064
 S <- read_excel("Data/summerR.xlsx")
 str(S)
 
-bargraph.CI(organism, STX, data = S, xlab = "Summer", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(organism, STX, data = S, xlab = "Summer", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a2 <- aov(STX  ~ organism, data = S) # no significativo
 summary(a2)
@@ -308,7 +328,7 @@ t.test(STX ~ organism, data = S, na.action=na.fail)# p-value = 0.25
 SP <- read_excel("Data/springR.xlsx")
 str(SP)
 
-bargraph.CI(organism, STX, data = SP, xlab = "Spring", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(organism, STX, data = SP, xlab = "Spring", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a3 <- aov(STX ~ organism, data = SP) # no significativo
 summary(a3)
@@ -324,7 +344,7 @@ layout(1)
 t.test(STX ~ organism, data = SP, na.action=na.fail)# p-value = 0.058
 
 # dif entre medias anuales ---------------------------------#
-bargraph.CI(Year, STX, data = data,  xlab = "Year", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Year, STX, data = data,  xlab = "Year", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 a6 <- aov(STX  ~ Year, data = data) #  significativos
 summary(a6)
@@ -337,7 +357,7 @@ layout(1)
 
 
 # dif entre medias anuales por area
-bargraph.CI(Year, STX, Area, data = data,  xlab = "Year", ylab = "µg STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=700)
+bargraph.CI(Year, STX, Area, data = data,  xlab = "Year", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=700)
 
 a7 <- aov(STX ~ Year*Area, data = data) # los 3 significativos
 summary(a7)
@@ -353,13 +373,13 @@ layout(1)
 ### Eventos toxicos y duracion de veda ----------------------------------------------------------#
 # Analisis de picos: 
 # STXmax: concentracion maxima alcanzada duante el evento toxico
-# Duration: duracion de la veda, T desde q el mejillon supera los 80 µg STX/100 g tejido, hasta que tiene valores por debajo de ese umbral
+# Duration: duracion de la veda, T desde q el mejillon supera los 80 ?g STX/100 g tejido, hasta que tiene valores por debajo de ese umbral
 
 library(readxl)
 data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 names(data2)
 
-bargraph.CI(Duration,STXmax,Organism, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend = TRUE, x.leg=0, y.leg=500)
+bargraph.CI(Duration,STXmax,Organism, data = data2, ylab = "?g STX eq/100 g tissue", xlab = "Days", legend = TRUE, x.leg=0, y.leg=500)
 
 a8 <- aov(log(Duration) ~ Organism, data = data2, na.action=na.fail) 
 summary(a8) # la duracion del evento toxico depende del organismo? no dif sig en la duracion del evento toxico segun el organismo
@@ -368,7 +388,7 @@ layout(matrix(c(1:6), 2, 3)) # residuales parecen mejorar cn el log
 plot(a8, 1:6) 
 layout(1)
 
-bargraph.CI(Duration,STXmax,Season, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=500)
+bargraph.CI(Duration,STXmax,Season, data = data2, ylab = "?g STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=500)
 
 
 a9 <- aov(log(Duration) ~ Season, data = data2, na.action=na.fail) 
@@ -381,7 +401,7 @@ layout(matrix(c(1:6), 2, 3))
 plot(a9, 1:6) # residuales parecen mejorar cn el log
 layout(1)
 
-bargraph.CI(Duration,STXmax,Area, data = data2, ylab = "µg STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=600)
+bargraph.CI(Duration,STXmax,Area, data = data2, ylab = "?g STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=600)
 
 a10 <- aov(log(Duration) ~ Area, data = data2, na.action=na.fail) 
 summary(a10) # no dif sig en la duracion del evento toxico segun el area 
