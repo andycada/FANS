@@ -14,14 +14,12 @@ str(data)
 # graficos sin incluir  la zona menos muestreada (BBB) -------------------------#
 
 library(tidyverse)
+theme_set(theme_bw())
 
 d_sorted <- data %>%
   mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-ggplot(d_sorted, aes(x = season, y = STX,color=season)) +
-  coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
-  geom_jitter(size = 2, alpha = 0.25, width = 0.2)+ theme_bw()
-
+ggplot(d_sorted, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
 ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
   coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
@@ -114,6 +112,7 @@ data <- read_excel("Data/totalR.xlsx")
 names(data)
 str(data)
 
+ggplot(data, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
 # STX vs Area 
 
