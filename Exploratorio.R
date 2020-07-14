@@ -110,6 +110,19 @@ layout(matrix(c(1:6), 2, 3))
 plot(a1, 1:6) 
 layout(1)
 
+STX<- data$STX
+Area<-data$Area
+
+#Normalidad
+shapiro.test(STX) #p-value < 2.2e-16
+shapiro.test(log(STX + 1)) #p-value < 2.2e-16
+
+# homogeneidad de varianzas 
+bartlett.test(STX ~ Area, data = data, na.action=na.fail) #p-value < 2.2e-16
+
+# homogeneidad de varianzas (No parametrico)
+fligner.test(STX ~ Area, data = data, na.action=na.fail)
+
 k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
 k1 #p-value < 2.2e-16
 
@@ -121,10 +134,19 @@ a2 <- aov(log(STX + 1) ~ season, data = data, na.action=na.fail)
 summary(a2)
 TukeyHSD(a2,"season") # STX es sig diferente en cada estacion del anio (summer> autumn> spring> winter)
 
+
 #residuales
 layout(matrix(c(1:6), 2, 3)) 
 plot(a2, 1:6) 
 layout(1)
+
+
+# homogeneidad de varianzas 
+bartlett.test(STX ~ season, data = data, na.action=na.fail) #p-value < 2.2e-16
+
+# homogeneidad de varianzas (No parametrico)
+fligner.test(STX ~ season, data = data, na.action=na.fail)
+
 
 k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
 k2 #p-value < 2.2e-16
@@ -153,7 +175,7 @@ layout(1)
 bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = "Organism")
 
 a4 <- aov(STX ~ Organism, data = data) 
-summary(a4) #  dif sig en la toxicidad en relacion al organismo, dats muy heterogneos
+summary(a4) #  no dif sig en la toxicidad en relacion al organismo, dats muy heterogneos
 
 # residuales 
 layout(matrix(c(1:6), 2, 3)) #residuales horribles incluso cn transformacion
