@@ -109,6 +109,7 @@ gam.check(model0)
 # pruebo area y organism como variables categoricas
 
 library(mgcv)
+require(gratia)
 
 DETOX2$area<-as.factor(DETOX2$area)
 DETOX2$organism<-as.factor(DETOX2$organism)
@@ -121,27 +122,38 @@ model1 <- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma, metho
 plot.gam(model1,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model1)  #R-sq.(adj) =   0.25   Deviance explained = 43.3% ################
 gam.check(model1, pages=1)
+draw(model1,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model1) # chequea el modelo, residuales, etc
+
 
 model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma, method = "REML") 
 plot.gam(model2,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model2)  #R-sq.(adj) =   0.259   Deviance explained = 46.2%, sig BBE y PP pero los graficos no se ve nada
 gam.check(model2, pages=1)
+draw(model2,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model2) # chequea el modelo, residuales, etc
 
 
 model3 <- gam(STX ~ s(Days,  by = organism), data = DETOX2,family=Gamma, method = "REML") 
 plot.gam(model3,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model3)  #R-sq.(adj) =   0.191   Deviance explained = 39.3%, sig cholga y meji pero los graficos no dan nada
 gam.check(model3, pages=1)
+draw(model3,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model3) # chequea el modelo, residuales, etc
 
 model4 <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model4,xlab= "Detoxification days",residuals=T,pch=500,all.terms=T,seWithMean=T, pages=1)
 summary(model4)  #R--sq.(adj) =  0.202   Deviance explained = 45.9%, todos sig y lindos graficos ###########
 gam.check(model4, pages=1)
+draw(model4,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model4) # chequea el modelo, residuales, etc
 
 model5 <- gam(STX ~ s(Days,  by = organism) + area, data = DETOX2,family=Gamma, method = "REML") 
 plot.gam(model5,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model5)  #R--sq.(adj) =   0.26   Deviance explained = 44.1%, sig cholga y meji pero los graficos no dan nada
 gam.check(model5, pages=1)
+draw(model5,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model5) # chequea el modelo, residuales, etc
 
 
 #transformo datos a log 
@@ -149,6 +161,8 @@ model6 <- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link=
 plot.gam(model6,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model6)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
 gam.check(model6)
+draw(model6,residuals=T) #dibuja el GAMs y los puntos son los residuales
+appraise(model6) # chequea el modelo, residuales, etc
 
 
 AIC(model0,model1,model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
