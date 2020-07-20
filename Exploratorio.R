@@ -470,9 +470,34 @@ names(data)
 
 library(mgcv)
 
-GLM5<-glm (STX  ~ Area+season+Organism,family="Gamma"(link="log"),data= data,na.action=na.fail)
-summary(GLM5) #plotear 
+GLM5<-glm (STX  ~ Area+season+Organism+Year,family="Gamma"(link="log"),data= data,na.action=na.fail)
+summary(GLM5) 
+drop1(GLM5, test="F")
 
-gam-model1 <- gam (STX  ~ Area + season + Organism,family="Gamma"(link="log"), data= data, method = "REML)
-plot.gam(gam-model1)
+GLM6<-glm (STX  ~ Area+season+Organism,family="Gamma"(link="log"),data= data,na.action=na.fail)
+summary(GLM6) 
+drop1(GLM6, test="F")
+anova(GLM6)
+
+
+#-- GAMS exploratorios
+
+# 1) sitio BBE, BBF, PP para mejillon (archivo Medulis)
+# 2) BBE para comparar mejillon y cholga 
+# 3) sitio BBB y BBE para cholga (archivo Aater)
+
+library(readxl)
+
+Medulis <- read_excel("Data/Medulis.xlsx")
+names(Medulis)
+str(Medulis)
+
+library(mgcv)
+  
+model1 <- gam(STX ~ s(Date) + area, data = Medulis,family=Gamma (link="log"), method = "REML") 
+plot.gam(model1,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(model1)  
+gam.check(model1, pages=1)     
+        
+
 
