@@ -87,9 +87,10 @@ TukeyHSD(a3,"Area:season")
 
 layout(matrix(c(1:6), 2, 3)) 
 plot(a3, 1:6) 
-layout(1)
+layout(1) CAL ~ SEXE + HORM + SEXE:HORM
 
-
+k3<-kruskal.test(STX ~ Area : season, data = data, na.action=na.fail)
+k1 #p-value < 2.2e-16
 
 # STX vs organism 
 
@@ -148,6 +149,9 @@ fligner.test(STX ~ Area, data = data, na.action=na.fail)
 k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
 k1 #p-value < 2.2e-16
 
+
+
+
 # STX vs Season
 
 bargraph.CI(season,STX, data = data, ylim= c(0, 400), ylab = "?g STX eq/100 g tissue", xlab = "Season")
@@ -173,6 +177,13 @@ fligner.test(STX ~ season, data = data, na.action=na.fail)
 k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
 k2 #p-value < 2.2e-16
 
+layout(matrix(c(1:6), 2, 3)) 
+plot(a2, 1:6) 
+layout(1)
+
+
+
+
 # anova factorial a dos factores cruzados (area y season)
 
 library(sciplot)
@@ -190,6 +201,10 @@ TukeyHSD(a3,"Area:season")
 layout(matrix(c(1:6), 2, 3)) 
 plot(a3, 1:6) 
 layout(1)
+
+
+k3<-kruskal.test(STX ~ Area*season, data = data, na.action=na.fail)
+k3 #p-value < 2.2e-16
 
 
 # STX vs organism ---------------------
@@ -450,4 +465,17 @@ plot(data2$Duration, fitted (GLM3), pch=22, col="red", bg="red", xlab= "Duration
 GLM1<-glm(Duration ~ STXmax,family=Gamma(link="log"),data= data2,na.action=na.fail)
 summary(GLM1) # Null deviance: 10.402  on 50  degrees of freedom, Residual deviance:  6.709  on 49  degrees of freedom
 plot(data2$Duration, fitted (GLM1), pch=22, col="red", bg="red", xlab= "Duration of toxic event (Days)") #AIC: 146.4
+
+##Datos totales (Stx vs Area, Season, Organism)
+
+data <- read_excel("Data/totalR-STXpositiva.xlsx")
+names(data)
+
+library(mgcv)
+
+GLM5<-glm (STX  ~ Area+season+Organism,family="Gamma"(link="log"),data= data,na.action=na.fail)
+summary(GLM5) #plotear 
+
+gam-model1 <- gam (STX  ~ Area + season + Organism,family="Gamma"(link="log"), data= data, method = "REML)
+plot.gam(gam-model1)
 
