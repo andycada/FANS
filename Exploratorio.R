@@ -8,6 +8,9 @@ data <- read_excel("Data/totalRsinbajo.xlsx")
 names(data)
 str(data)
 
+data$STX <- data$STX + 0.001
+
+  
 # Area: BBE (Bahia Brown Entrada), BBF(B Broww Fondo), PP (Punta Parana)
 
 
@@ -112,7 +115,7 @@ data <- read_excel("Data/totalR.xlsx")
 names(data)
 str(data)
 
-ggplot(data, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
+ggplot(data, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") 
 
 # STX vs Area 
 
