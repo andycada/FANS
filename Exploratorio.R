@@ -483,24 +483,86 @@ drop1(GLM6, test="F")
 anova(GLM6)
 
 
-#-- GAMS exploratorios
+##-- GAMS exploratorios---------------------------------------------------#####
 
 # 1) sitio BBE, BBF, PP para mejillon (archivo Medulis)
-# 2) BBE para comparar mejillon y cholga 
-# 3) sitio BBB y BBE para cholga (archivo Aater)
+# 2) sitio BBB y BBE para cholga (archivo Aater)
+# 3) BBE para comparar mejillon y cholga 
 
 library(readxl)
+library(nlme)
 
 Medulis <- read_excel("Data/Medulis.xlsx")
 names(Medulis)
 str(Medulis)
 
+Medulis$STX <- Medulis$STX + 0.001
+Medulis$STX
+
+
+#Mejillon
+Medulis$STX
+Medulis$Area <- as.factor(Medulis$STX)
+Medulis$Date <- as.factor(Medulis$Date)
+
 library(mgcv)
   
-model1 <- gam(STX ~ s(Date) + area, data = Medulis,family=Gamma (link="log"), method = "REML") 
-plot.gam(model1,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+M1 <- gam(STX0001 ~ s(Date) + Area, data = Medulis,family=Gamma (link="log"), method = "REML") 
+plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M1)  
+gam.check(M1, pages=1)   
+
+E <- residuals(M1, type = "normalized")
+I1 <- !is.na(Medulis$STX0001)
+Efull <- vector(length = length(Medulis$STX0001))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+      main = "Auto-correlation plot for residuals")
+
+
+# con STx transformada en r directamente 
+
+M1 <- gam(Medulis$STX ~ s(Date) + Area, data = Medulis,family=Gamma (link="log"), method = "REML") 
+plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M1)  
+gam.check(M1, pages=1)   
+
+# Grafico de Autocorrelacion para probar si hay independencia
+
+E <- residuals(M1)
+I1 <- !is.na(Medulis$STX0001)
+Efull <- vector(length = length(Medulis$STX0001))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#Incluyo autocorrelacion AR-1 
+
+M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+summary(M1A)
+
+# form argument within this argument is used to tell R that the order of the data is determined by the variable Date
+      
+
+
+# cholga   
+Aater <- read_excel("Data/Aater.xlsx")
+names(Aater)
+str(Aater)
+
+model2 <- gam(STX0001 ~ s(Date) + Area, data = Aater,family=Gamma (link="log"), method = "REML") 
+plot.gam(model2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model1)  
-gam.check(model1, pages=1)     
-        
+gam.check(model1, pages=1)  
 
+#BBE
+BBE <- read_excel("Data/BBE-R.xlsx")
+names(BBE)
+str(BBE)
 
+model3 <- gam(STX0001 ~ s(Date) + organism, data = BBE,family=Gamma (link="log"), method = "REML") 
+plot.gam(model3,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(model1)  
+gam.check(model1, pages=1)  

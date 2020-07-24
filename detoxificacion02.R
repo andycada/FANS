@@ -167,6 +167,47 @@ appraise(model6) # chequea el modelo, residuales, etc
 
 AIC(model0,model1,model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
 
+## Modelo con autocorrelacion mas variabilidad intergrupal (Zhur 2009) ------------------##
+
+library(readxl)
+DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
+str(DETOX2)
+
+DETOX2 <- c(DETOX2$BBE.A.ater, DETOX2$BBE.Medulis,
+            DETOX2$PP.M.edulis, DETOX2$BBF.Medulis)
+Time <- rep(Hawaii$Year, 4)
+> Rain <- rep(Hawaii$Rainfall, 4)
+> ID <- factor(rep(c("Stilt.Oahu", "Stilt.Maui",
+                     "Coot.Oahu", "Coot.Maui"),
+                   each = length(Hawaii$Year)))
+> library(lattice)
+> xyplot(Birds ??? Time | ID, col = 1)
+> library(mgcv)
+> BM1<-gamm(Birds ??? Rain + ID +
+              s(Time, by = as.numeric(ID == "Stilt.Oahu")) +
+              s(Time, by = as.numeric(ID == "Stilt.Maui")) +
+              s(Time, by = as.numeric(ID == "Coot.Oahu")) +
+              s(Time, by = as.numeric(ID == "Coot.Maui")),
+            weights = varIdent(form =??? 1 | ID))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #--------------------------------------------#
 
