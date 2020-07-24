@@ -492,6 +492,7 @@ anova(GLM6)
 library(readxl)
 library(nlme)
 
+#1)
 Medulis <- read_excel("Data/Medulis.xlsx")
 names(Medulis)
 str(Medulis)
@@ -500,26 +501,7 @@ Medulis$STX <- Medulis$STX + 0.001
 Medulis$STX
 
 
-#Mejillon
-Medulis$STX
-Medulis$Area <- as.factor(Medulis$STX)
-Medulis$Date <- as.factor(Medulis$Date)
-
 library(mgcv)
-  
-M1 <- gam(STX0001 ~ s(Date) + Area, data = Medulis,family=Gamma (link="log"), method = "REML") 
-plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(M1)  
-gam.check(M1, pages=1)   
-
-E <- residuals(M1, type = "normalized")
-I1 <- !is.na(Medulis$STX0001)
-Efull <- vector(length = length(Medulis$STX0001))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-      main = "Auto-correlation plot for residuals")
-
 
 # con STx transformada en r directamente 
 
@@ -538,7 +520,7 @@ Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
 
-#Incluyo autocorrelacion AR-1 
+# Incluyo autocorrelacion AR-1 
 
 M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(form =~ Date))
 summary(M1A)
@@ -547,22 +529,57 @@ summary(M1A)
       
 
 
-# cholga   
+# 2) cholga   
 Aater <- read_excel("Data/Aater.xlsx")
 names(Aater)
 str(Aater)
 
-model2 <- gam(STX0001 ~ s(Date) + Area, data = Aater,family=Gamma (link="log"), method = "REML") 
-plot.gam(model2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(model1)  
-gam.check(model1, pages=1)  
+Aater$STX <- Aater$STX + 0.001
 
-#BBE
+
+M2 <- gam(Aater$STX  ~ s(Date) + Area, data = Aater,family=Gamma (link="log"), method = "REML") 
+plot.gam(M2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M2)  
+gam.check(M2, pages=1)  
+
+# grafico Autocorrelacion
+E <- residuals(M2)
+I1 <- !is.na(Aater$STX)
+Efull <- vector(length = length(Aater$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+# Incluyo autocorrelacion AR-1 
+
+M2A<- gam(Aater$STX  ~ s(Date) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+summary(M2A)
+
+
+# 3) BBE
 BBE <- read_excel("Data/BBE-R.xlsx")
 names(BBE)
 str(BBE)
 
-model3 <- gam(STX0001 ~ s(Date) + organism, data = BBE,family=Gamma (link="log"), method = "REML") 
-plot.gam(model3,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(model1)  
-gam.check(model1, pages=1)  
+BBE$STX <- BBE$STX + 0.001
+
+M3 <- gam(BBE$STX ~ s(Date) + organism, data = BBE,family=Gamma (link="log"), method = "REML") 
+plot.gam(M3,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M3)  
+gam.check(M3, pages=1)  
+
+#grafico Autocorrelacion
+E <- residuals(M3)
+I1 <- !is.na(BBE$STX)
+Efull <- vector(length = length(BBE$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#Incluyo autocorrelacion AR-1 
+
+M3A<- gam(BBE$STX  ~ s(Date) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+summary(M3A)
+
