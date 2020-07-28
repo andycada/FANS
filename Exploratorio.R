@@ -24,6 +24,8 @@ d_sorted <- data %>%
 
 ggplot(d_sorted, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
+ggplot(d_sorted %>% filter(Organism=="M. edulis"), aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
+
 ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
   coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
   geom_jitter(size = 2, alpha = 0.25, width = 0.2)  + theme_bw()
@@ -500,6 +502,14 @@ str(Medulis)
 Medulis$STX <- Medulis$STX + 0.001
 Medulis$STX
 
+#
+# FIJATE LO QUE DA EL GRAFICO!!!!!!!!!!!!!!!! 
+# Las fechas las toma mal
+#
+require(ggplot2)
+ggplot(Medulis, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
+
+ggplot(Medulis , aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
 
 library(mgcv)
 require(gratia)
@@ -512,6 +522,20 @@ summary(M1)
 gam.check(M1, pages=1)   
 draw(M1, residuals = TRUE)
 appraise(M1)
+
+#
+# En realidad el modelo no está funcionando para nada por eso te da ese resultado de autocorrelacion
+# No te funciona porque la fecha sola no alcanza para predecir la concentracion ademas de que es algo estacional
+# ademas no está leyendo bien la fecha del excel.
+#
+# Mirar lo de modelos jerarquicos
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6542350/
+#
+# Quizas mirar 
+# https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
+#
+
+
 # Grafico de Autocorrelacion para probar si hay independencia
 
 E <- residuals(M1)
@@ -524,6 +548,8 @@ Efull <- NA
 Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
+
+
 
 # Incluyo autocorrelacion AR-1 
 
@@ -538,6 +564,7 @@ acf(E, na.action = na.pass,
 # Cor ARMA
 M2A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
 summary(M2A)
+
 
 
 # form argument within this argument is used to tell R that the order of the data is determined by the variable Date
