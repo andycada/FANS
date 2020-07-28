@@ -502,6 +502,7 @@ Medulis$STX
 
 
 library(mgcv)
+require(gratia)
 
 # con STx transformada en r directamente 
 
@@ -509,10 +510,14 @@ M1 <- gam(Medulis$STX ~ s(Date) + Area, data = Medulis,family=Gamma (link="log")
 plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(M1)  
 gam.check(M1, pages=1)   
-
+draw(M1, residuals = TRUE)
+appraise(M1)
 # Grafico de Autocorrelacion para probar si hay independencia
 
 E <- residuals(M1)
+if( any(is.na(E)) ) 
+  print("No hay NA!")
+
 I1 <- !is.na(Medulis$STX0001)
 Efull <- vector(length = length(Medulis$STX0001))
 Efull <- NA
@@ -522,11 +527,21 @@ acf(Efull, na.action = na.pass,
 
 # Incluyo autocorrelacion AR-1 
 
-M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Date))
 summary(M1A)
 
+E <- residuals(M1A)
+acf(E, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+
+# Cor ARMA
+M2A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
+summary(M2A)
+
+
 # form argument within this argument is used to tell R that the order of the data is determined by the variable Date
-      
+AIC(M1,M1A,M2A)      
 
 
 # 2) cholga   
