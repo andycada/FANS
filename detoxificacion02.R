@@ -167,14 +167,51 @@ appraise(model6) # chequea el modelo, residuales, etc
 
 AIC(model0,model1,model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
 
-## Modelo con autocorrelacion mas variabilidad intergrupal (Zhur 2009) ------------------##
+## Modelo con autocorrelacion  para ver si mejoran los modelos 6 y 4 ------------------##
 
 library(readxl)
 DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 str(DETOX2)
 
-DETOX2 <- c(DETOX2$BBE.A.ater, DETOX2$BBE.Medulis,
-            DETOX2$PP.M.edulis, DETOX2$BBF.Medulis)
+
+# Grafico Autocorrelacion
+
+#model 6
+E <- residuals(model6)
+I1 <- !is.na(DETOX2$STX)
+Efull <- vector(length = length(DETOX2$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#model4
+E <- residuals(model4)
+I1 <- !is.na(DETOX2$STX)
+Efull <- vector(length = length(DETOX2$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#Incluyo autocorrelacion AR-1 
+
+model6A<- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
+summary(model6A)
+
+model4A <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
+summary(model4A)
+
+
+#  Modelo jerarquico con autocorrelacion
+
+library(readxl)
+DETOX2J <- read_excel("Data/DETOX-filtradoJ.xlsx")
+str(DETOX2J)
+
+DETOX2J <- c(DETOX2J$BBE. Aater 1, DETOX2J$BBE. Aater 2,DETOX2J$BBE. Aater 3,
+             DETOX2J$BBE. Medulis 1, DETOX2$BBE. Medulis 2,DETOX2$BBE. Medulis 3, DETOX2$BBE. Medulis 4,
+             DETOX2J$BBF. Medulis 5, DETOX2J$BBF. Medulis 6, DETOX2J$PP. Medulis 7)
 Time <- rep(Hawaii$Year, 4)
 > Rain <- rep(Hawaii$Rainfall, 4)
 > ID <- factor(rep(c("Stilt.Oahu", "Stilt.Maui",
