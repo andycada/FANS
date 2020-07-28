@@ -501,17 +501,20 @@ Medulis$STX <- Medulis$STX + 0.001
 Medulis$STX
 
 
+Medulis$Area<-as.factor(Medulis$Area)
+
+
 library(mgcv)
 require(gratia)
 
 # con STx transformada en r directamente 
 
-M1 <- gam(Medulis$STX ~ s(Date) + Area, data = Medulis,family=Gamma (link="log"), method = "REML") 
+M1 <- gam(Medulis$STX ~ s(Date, by= Area), data=Medulis,family=Gamma (link="log"), method = "REML") 
 plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(M1)  
-gam.check(M1, pages=1)   
 draw(M1, residuals = TRUE)
 appraise(M1)
+
 # Grafico de Autocorrelacion para probar si hay independencia
 
 E <- residuals(M1)
@@ -528,48 +531,72 @@ acf(Efull, na.action = na.pass,
 # Incluyo autocorrelacion AR-1 
 
 M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Date))
+plot.gam(M1A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1A, residuals = TRUE)
+appraise(M1A)
 summary(M1A)
 
-E <- residuals(M1A)
-acf(E, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
+M1B<- gam(Medulis$STX ~ s(Date, by= Area), na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Date))
+plot.gam(M1B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1B, residuals = TRUE)
+appraise(M1B)
+summary(M1B)
 
 
 # Cor ARMA
-M2A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
+M1C<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
+summary(M2A)
+plot.gam(M2A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M2A, residuals = TRUE)
+appraise(M2A)
 summary(M2A)
 
-
 # form argument within this argument is used to tell R that the order of the data is determined by the variable Date
-AIC(M1,M1A,M2A)      
 
+AIC(M1,M1A,M1B,M1C) # M1A, M1C los mejorcitos pero feo el ajuste      
 
 # 2) cholga   
 Aater <- read_excel("Data/Aater.xlsx")
 names(Aater)
 str(Aater)
 
-Aater$STX <- Aater$STX + 0.001
+Aater$Area<-as.factor(Aater$Area)
 
+Aater$STX <- Aater$STX + 0.001
 
 M2 <- gam(Aater$STX  ~ s(Date) + Area, data = Aater,family=Gamma (link="log"), method = "REML") 
 plot.gam(M2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(M2)  
-gam.check(M2, pages=1)  
+draw(M2, residuals = TRUE)
+appraise(M2)
+summary(M2) #Deviance explained = 28%
+
+M2A <- gam(Aater$STX  ~ s(Date, by= Area), data = Aater,family=Gamma (link="log"), method = "REML") 
+plot.gam(M2A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M2A, residuals = TRUE)
+appraise(M2A)
+summary(M2A) # Deviance explained = 42.4% mejora el modelo y los residuales 
+
 
 # grafico Autocorrelacion
-E <- residuals(M2)
+E <- residuals(M2A)
 I1 <- !is.na(Aater$STX)
 Efull <- vector(length = length(Aater$STX))
 Efull <- NA
 Efull[I1] <- E
 acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
+    main = "Auto-correlation plot for residuals") # distribucion senoidal 
 
 # Incluyo autocorrelacion AR-1 
 
-M2A<- gam(Aater$STX  ~ s(Date) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
-summary(M2A)
+M2B<- gam(Aater$STX  ~ s(Date, by= Area) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+plot.gam(M2B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M2B, residuals = TRUE)
+appraise(M2B)
+summary(M2B) # Deviance explained =   44% pero no me toma la autocorrelacion 
+
+
+AIC(M2,M2A,M2B) # M2B el mejorcito 
+
 
 
 # 3) BBE
@@ -579,13 +606,25 @@ str(BBE)
 
 BBE$STX <- BBE$STX + 0.001
 
+BBE$organism<-as.factor(BBE$organism)
+
 M3 <- gam(BBE$STX ~ s(Date) + organism, data = BBE,family=Gamma (link="log"), method = "REML") 
 plot.gam(M3,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(M3)  
-gam.check(M3, pages=1)  
+draw(M3, residuals = TRUE)
+appraise(M3)
+summary(M3)
+
+
+M3A <- gam(BBE$STX ~ s(Date, by= organism), data = BBE,family=Gamma (link="log"), method = "REML") 
+plot.gam(M3A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M3A, residuals = TRUE)
+appraise(M3A)
+summary(M3A)
+
+
 
 #grafico Autocorrelacion
-E <- residuals(M3)
+E <- residuals(M3A)
 I1 <- !is.na(BBE$STX)
 Efull <- vector(length = length(BBE$STX))
 Efull <- NA
@@ -595,6 +634,10 @@ acf(Efull, na.action = na.pass,
 
 #Incluyo autocorrelacion AR-1 
 
-M3A<- gam(BBE$STX  ~ s(Date) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
-summary(M3A)
+M3B <- gam(BBE$STX ~ s(Date, by= organism), data = BBE,family=Gamma (link="log"), method = "REML", correlation = corARMA(form =~ Date)) 
+plot.gam(M3B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M3B, residuals = TRUE)
+appraise(M3B)
+summary(M3B)
 
+AIC(M3,M3A,M3B)
