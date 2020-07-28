@@ -197,11 +197,19 @@ acf(Efull, na.action = na.pass,
 #Incluyo autocorrelacion AR-1 
 
 model6A<- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
-summary(model6A)
+plot.gam(model6A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6A,residuals=T) 
+appraise(model6A) 
+summary(model6A)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
+gam.check(model6A)
+
 
 model4A <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
-summary(model4A)
-
+plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4A,residuals=T) 
+appraise(model4A) 
+summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
+gam.check(model4A)
 
 #  Modelo jerarquico con autocorrelacion
 
