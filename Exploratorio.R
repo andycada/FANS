@@ -24,6 +24,8 @@ d_sorted <- data %>%
 
 ggplot(d_sorted, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
+ggplot(d_sorted %>% filter(Organism=="M. edulis"), aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
+
 ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
   coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
   geom_jitter(size = 2, alpha = 0.25, width = 0.2)  + theme_bw()
@@ -499,21 +501,46 @@ str(Medulis)
 
 Medulis$STX <- Medulis$STX + 0.001
 Medulis$STX
-
-
 Medulis$Area<-as.factor(Medulis$Area)
+
+#
+# FIJATE LO QUE DA EL GRAFICO!!!!!!!!!!!!!!!! 
+# Las fechas las toma mal
+#
+require(ggplot2)
+ggplot(Medulis, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
+
+ggplot(Medulis , aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
 
 
 library(mgcv)
 require(gratia)
 
+Medulis$Date<-as.numeric(Medulis$Date)
+Medulis$Date
+
 # con STx transformada en r directamente 
 
-M1 <- gam(Medulis$STX ~ s(Date, by= Area), data=Medulis,family=Gamma (link="log"), method = "REML") 
+M1 <- gam(Medulis$STX ~ s(Date) + Area, data=Medulis,family=Gamma (link="log"), method = "REML") 
 plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(M1)  
 draw(M1, residuals = TRUE)
 appraise(M1)
+
+
+#
+# En realidad el modelo no está funcionando para nada por eso te da ese resultado de autocorrelacion
+# No te funciona porque la fecha sola no alcanza para predecir la concentracion ademas de que es algo estacional
+# ademas no está leyendo bien la fecha del excel.
+#
+# Mirar lo de modelos jerarquicos
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6542350/
+#
+# Quizas mirar 
+# https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
+
+
+
 
 # Grafico de Autocorrelacion para probar si hay independencia
 
@@ -527,6 +554,8 @@ Efull <- NA
 Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
+
+
 
 # Incluyo autocorrelacion AR-1 
 
@@ -545,11 +574,12 @@ summary(M1B)
 
 # Cor ARMA
 M1C<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
-summary(M2A)
-plot.gam(M2A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(M2A, residuals = TRUE)
-appraise(M2A)
-summary(M2A)
+summary(M1C)
+plot.gam(M1C,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1C, residuals = TRUE)
+appraise(M1C)
+summary(M1C)
+
 
 # form argument within this argument is used to tell R that the order of the data is determined by the variable Date
 
@@ -560,9 +590,16 @@ Aater <- read_excel("Data/Aater.xlsx")
 names(Aater)
 str(Aater)
 
+require(ggplot2)
+ggplot(Aater, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
+
+ggplot(Aater , aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
+
 Aater$Area<-as.factor(Aater$Area)
 
 Aater$STX <- Aater$STX + 0.001
+Aater$Date <- as.numeric(Aater$Date)
+
 
 M2 <- gam(Aater$STX  ~ s(Date) + Area, data = Aater,family=Gamma (link="log"), method = "REML") 
 plot.gam(M2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
@@ -588,7 +625,7 @@ acf(Efull, na.action = na.pass,
 
 # Incluyo autocorrelacion AR-1 
 
-M2B<- gam(Aater$STX  ~ s(Date, by= Area) + Area, na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
+M2B<- gam(Aater$STX  ~ s(Date, by= Area), na.action = na.omit, data = Aater, family=Gamma (link="log"), correlation = corARMA(form =~ Date))
 plot.gam(M2B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M2B, residuals = TRUE)
 appraise(M2B)
@@ -604,9 +641,15 @@ BBE <- read_excel("Data/BBE-R.xlsx")
 names(BBE)
 str(BBE)
 
-BBE$STX <- BBE$STX + 0.001
+ggplot(BBE, aes(x = Date, y = STX,color=organism)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
-BBE$organism<-as.factor(BBE$organism)
+ggplot(BBE , aes(x = Date, y = STX,color=organism)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
+
+Aater$Area<-as.factor(Aater$Area)
+
+
+BBE$STX <- BBE$STX + 0.001
+Aater$organism<-as.factor(Aater$organism)
 
 M3 <- gam(BBE$STX ~ s(Date) + organism, data = BBE,family=Gamma (link="log"), method = "REML") 
 plot.gam(M3,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
@@ -620,7 +663,6 @@ plot.gam(M3A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M3A, residuals = TRUE)
 appraise(M3A)
 summary(M3A)
-
 
 
 #grafico Autocorrelacion
@@ -641,3 +683,88 @@ appraise(M3B)
 summary(M3B)
 
 AIC(M3,M3A,M3B)
+
+## Modelos jerarquico
+## smooth.terms {mgcv}
+# Factor smooth interactions
+# bs="fs" Smooth factor interactions are often produced using by variables (see gam.models), but a special smoother class (see factor.smooth.interaction) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. 
+
+## GS: A single common smoother plus group-level smoothers that have the same wiggliness
+
+#1)
+Medulis <- read_excel("Data/Medulis.xlsx")
+names(Medulis)
+str(Medulis)
+
+Medulis$STX <- Medulis$STX + 0.001
+Medulis$STX
+Medulis$Area<-as.factor(Medulis$Area)
+Medulis$Date<-as.numeric(Medulis$Date)
+
+#CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
+
+
+M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+# luego agregar correlacion 
+# correlation = corAR1(form =~ Date))
+
+plot.gam(M1AGS,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1AGS, residuals = TRUE)
+appraise(M1AGS)
+summary(M1AGS) ##Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0.5) :
+               #le modle a des lissages 1-d rpts des mmes variables
+
+## Model GS
+#zoo_daph_modGS <- gam(density_adj ??? s(day, bs="cc", k=10) +
+                      #  s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +
+                       # s(lake, year_f, bs="re"),
+                     # data=daphnia_train, knots=list(day=c(0, 365)),
+                     # family=Gamma(link="log"), method="REML",
+                     # drop.unused.levels=FALSE)
+
+M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+
+
+## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
+
+#CO2_modGI <- gam(log(uptake) ??? s(log(conc), k=5, m=2, bs="tp") + s(log(conc), by=Plant_uo, k=5, m=1, bs="tp") + s(Plant_uo, bs="re", k=12), data=CO2, method="REML")
+
+
+M1AGI <- gam(Medulis$STX ~ s(Date, m=2, bs="tp") + s(Date, by=Area, m=1, bs="tp") + s(Area, bs="re"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+draw(M1AGI, residuals = TRUE)
+appraise(M1AGI)
+summary(M1AGI)
+gam.check(M1AGI) 
+
+# luego agregar correlacion # correlation = corAR1(form =~ Date))
+
+#zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") +
+                       # s(day, by=lake, k=10, bs="cc") +
+                       # s(lake, year_f, bs="re"),
+                     # data=daphnia_train, knots=list(day=c(0, 365)),
+                     # family=Gamma(link ="log"), method="REML",
+                     # drop.unused.levels=FALSE)
+
+# k.check(test) EDF< k
+
+
+
+
+# ciclic smoothers seasonal data
+# knots: need to specify start and end points for our cycles
+#  specify this smoother type as a factor-smooth interaction term using the xt
+
+
+
+
+
+
+## #. Note that we also include a random
+# smoother for both taxon and taxon:year_f, where year_f is year transformed
+#into a factor variable. This deals with the fact that average zooplankton densities can
+#show large year-to-year variation.
+
+# In GAMs, the bias-variance trade-off is managed by the terms of the penalty matrix, and
+# equivalently random effect variances in HGLMs.
