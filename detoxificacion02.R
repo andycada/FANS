@@ -115,7 +115,7 @@ DETOX2$area<-as.factor(DETOX2$area)
 DETOX2$organism<-as.factor(DETOX2$organism)
 class(DETOX2$area)
 class(DETOX2$organism)
-class(DETOX2$Date)
+class(DETOX2$Days)
 
 layout(1)
 model1 <- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma, method = "REML") 
@@ -144,7 +144,6 @@ appraise(model3) # chequea el modelo, residuales, etc
 model4 <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model4,xlab= "Detoxification days",residuals=T,pch=500,all.terms=T,seWithMean=T, pages=1)
 summary(model4)  #R--sq.(adj) =  0.202   Deviance explained = 45.9%, todos sig y lindos graficos ###########
-gam.check(model4, pages=1)
 draw(model4,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model4) # chequea el modelo, residuales, etc
 
@@ -155,12 +154,9 @@ gam.check(model5, pages=1)
 draw(model5,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model5) # chequea el modelo, residuales, etc
 
-
-#transformo datos a log 
 model6 <- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model6,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model6)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
-gam.check(model6)
 draw(model6,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model6) # chequea el modelo, residuales, etc
 
@@ -201,25 +197,69 @@ plot.gam(model6A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6A,residuals=T) 
 appraise(model6A) 
 summary(model6A)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
-gam.check(model6A)
 
 
-model4A <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
+model4A <- gam(STX ~ s(Days,by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
 plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4A,residuals=T) 
 appraise(model4A) 
-summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
-gam.check(model4A)
+summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 49%
 
-#  Modelo jerarquico con autocorrelacion
+
+
+
+
+### Modelos jerarquicos
+
+## GS: A single common smoother plus group-level smoothers that have the same wiggliness
+
+
+# CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
+# M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, m=2,bs="fs"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+
+model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+plot.gam(model6AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6AGS,residuals=T) 
+appraise(model6AGS) 
+summary(model6AGS) # Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0.5) :  le modle a des lissages 1-d rpts des mmes variables
+
+
+model4A <- gam(STX ~ s(Days,by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
+plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4A,residuals=T) 
+appraise(model4A) 
+summary(model4A) 
+
+
+## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
+
+#CO2_modGI <- gam(log(uptake) ??? s(log(conc), k=5, m=2, bs="tp") + s(log(conc), by=Plant_uo, k=5, m=1, bs="tp") + s(Plant_uo, bs="re", k=12), data=CO2, method="REML")
+
+model6AGI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML")
+plot.gam(model6AGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6AGI,residuals=T) 
+appraise(model6AGI) 
+summary(model6AGI) 
+
+
+
+
+
+
+
+
+
+#  Modelo jerarquico con autocorrelacion (Zhur 2009)
 
 library(readxl)
-DETOX2J <- read_excel("Data/DETOX-filtradoJ.xlsx")
+DETOX2J <- read_excel("Data/DETOX-jerarquico.xlsx")
 str(DETOX2J)
+DETOX2J$BBEC1
 
-DETOX2J <- c(DETOX2J$BBE. Aater 1, DETOX2J$BBE. Aater 2,DETOX2J$BBE. Aater 3,
-             DETOX2J$BBE. Medulis 1, DETOX2$BBE. Medulis 2,DETOX2$BBE. Medulis 3, DETOX2$BBE. Medulis 4,
-             DETOX2J$BBF. Medulis 5, DETOX2J$BBF. Medulis 6, DETOX2J$PP. Medulis 7)
+DETOX2J <- c(DETOX2J$BBEC1 , DETOX2J$BBEC2,DETOX2J$BBEC3,
+             DETOX2J$BBEM1, DETOX2$BBEM2,DETOX2$BBEM3, DETOX2$BBEM4,
+             DETOX2J$BBFM1, DETOX2J$BBFM2, DETOX2J$PPM1)
 Time <- rep(Hawaii$Year, 4)
 > Rain <- rep(Hawaii$Rainfall, 4)
 > ID <- factor(rep(c("Stilt.Oahu", "Stilt.Maui",
@@ -234,25 +274,6 @@ Time <- rep(Hawaii$Year, 4)
               s(Time, by = as.numeric(ID == "Coot.Oahu")) +
               s(Time, by = as.numeric(ID == "Coot.Maui")),
             weights = varIdent(form =??? 1 | ID))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #--------------------------------------------#
 
