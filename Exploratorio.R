@@ -503,10 +503,14 @@ Medulis$STX <- Medulis$STX + 0.001
 Medulis$STX
 Medulis$Area<-as.factor(Medulis$Area)
 
-#
-# FIJATE LO QUE DA EL GRAFICO!!!!!!!!!!!!!!!! 
-# Las fechas las toma mal
-#
+Medulis$Date<-as.Date(Medulis$Date)
+
+
+# generar variable Time 
+
+# Time variable: created which we'll use for the trend or between-year variable; I scale by 1000 as discussed above
+Medulis <- transform(Medulis, Time = as.numeric(Date) / 1000)
+
 require(ggplot2)
 ggplot(Medulis, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
@@ -516,30 +520,27 @@ ggplot(Medulis , aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + f
 library(mgcv)
 require(gratia)
 
-Medulis$Date<-as.numeric(Medulis$Date)
-Medulis$Date
 
 # con STx transformada en r directamente 
+# uso variable time o tengo que convertir date en variable numerica
 
-M1 <- gam(Medulis$STX ~ s(Date) + Area, data=Medulis,family=Gamma (link="log"), method = "REML") 
+M1 <- gam(Medulis$STX ~ s(Time) + Area, data=Medulis,family=Gamma (link="log"), method = "REML") 
 plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(M1)  
 draw(M1, residuals = TRUE)
 appraise(M1)
 
 
-#
+M2 <- gam(Medulis$STX ~ s(Time, by=Area) + Area, data=Medulis,family=Gamma (link="log"), method = "REML") 
+plot.gam(M2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M2)  
+draw(M2, residuals = TRUE)
+appraise(M2)
+
+
 # En realidad el modelo no está funcionando para nada por eso te da ese resultado de autocorrelacion
 # No te funciona porque la fecha sola no alcanza para predecir la concentracion ademas de que es algo estacional
-# ademas no está leyendo bien la fecha del excel.
-#
-# Mirar lo de modelos jerarquicos
-# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6542350/
-#
-# Quizas mirar 
 # https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
-
-
 
 
 # Grafico de Autocorrelacion para probar si hay independencia
@@ -548,29 +549,35 @@ E <- residuals(M1)
 if( any(is.na(E)) ) 
   print("No hay NA!")
 
-I1 <- !is.na(Medulis$STX0001)
-Efull <- vector(length = length(Medulis$STX0001))
+I1 <- !is.na(Medulis$STX)
+Efull <- vector(length = length(Medulis$STX))
 Efull <- NA
 Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
 
 
-
+## donde dice Date ver de cambiar pot time o year
 # Incluyo autocorrelacion AR-1 
 
-M1A<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Date))
+M1A<- gam(Medulis$STX ~ s(Time) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Time))
 plot.gam(M1A,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M1A, residuals = TRUE)
 appraise(M1A)
 summary(M1A)
 
-M1B<- gam(Medulis$STX ~ s(Date, by= Area), na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Date))
+
+M1B<- gam(Medulis$STX ~ s(Date, by= Area), na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Time))
 plot.gam(M1B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M1B, residuals = TRUE)
 appraise(M1B)
 summary(M1B)
 
+M2 <- gam(Medulis$STX ~ s(Time, by=Area) + Area, data=Medulis,family=Gamma (link="log"), method = "REML", correlation = corAR1(form =~ Time)) 
+plot.gam(M2,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+summary(M2)  
+draw(M2, residuals = TRUE)
+appraise(M2)
 
 # Cor ARMA
 M1C<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
@@ -584,6 +591,171 @@ summary(M1C)
 # form argument within this argument is used to tell R that the order of the data is determined by the variable Date
 
 AIC(M1,M1A,M1B,M1C) # M1A, M1C los mejorcitos pero feo el ajuste      
+
+
+#### MODELOS JERARQUICOS  ######
+
+# smooth.terms {mgcv}
+# Factor smooth interactions
+# bs="fs" Smooth factor interactions are often produced using by variables (see gam.models), but a special smoother class (see factor.smooth.interaction) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. 
+
+## GS: A single common smoother plus group-level smoothers that have the same wiggliness
+
+#1)
+Medulis <- read_excel("Data/Medulis.xlsx")
+names(Medulis)
+str(Medulis)
+
+
+#CO2_modGS <- gam(log(uptake) ~  s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
+
+
+M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+M1AGS <- gam(Medulis$STX ~ s(Date, m=2) + s(Date, Area, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+
+# luego agregar correlacion = corAR1(form =~ Date))
+
+plot.gam(M1AGS,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1AGS, residuals = TRUE)
+appraise(M1AGS)
+summary(M1AGS) ##Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0.5) :
+               #le modle a des lissages 1-d rpts des mmes variables
+
+#zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) +
+                      #  s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +
+                       # s(lake, year_f, bs="re"),
+                     # data=daphnia_train, knots=list(day=c(0, 365)),
+                     # family=Gamma(link="log"), method="REML",
+                     # drop.unused.levels=FALSE)
+
+M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+
+
+## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
+
+#CO2_modGI <- gam(log(uptake) ~ s(log(conc), k=5, m=2, bs="tp") + s(log(conc), by=Plant_uo, k=5, m=1, bs="tp") + s(Plant_uo, bs="re", k=12), data=CO2, method="REML")
+
+
+M1AGI <- gam(Medulis$STX ~ s(Time, m=2, bs="tp") + s(Time, by=Area, m=1, bs="tp") + s(Area, bs="re"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+draw(M1AGI, residuals = TRUE) ## Error in check_is_mgcv_smooth(smooth) : Object passed to 'smooth' is not a 'mgcv.smooth'.
+appraise(M1AGI)   
+summary(M1AGI)
+gam.check(M1AGI) 
+
+
+# Me tira errores, habra que Cambiar los parametros m y bs??
+
+
+# MODELAR VARIABILIDAD ESTACIONAL 
+#https://fromthebottomoftheheap.net/2014/05/09/modelling-seasonal-data-with-gam/
+
+#1)any trend or long term change in the level of the time series: (x2) between year times
+# to use the date of observation converted to a numeric variable for my between year data, x2 (time)
+#2)any seasonal or within-year variation: (x1) within-year 
+#you could use the month of observation as a decimal value, which is particularly useful if you only have monthly or less frequent data
+#For more frequent observations I use the day of the year as my time variable. This information is also easily derived from a Date variable using the "%j" date format
+
+# (x1) convierto las variables meses y dias en numericas para modelar seasonal or within-year variation: (x1) 
+
+Medulis$Month<-as.numeric(Medulis$Month)
+Medulis$Month 
+Medulis$Day<-as.numeric(Medulis$Day)
+
+str(Medulis)
+
+# generar variable Time 
+
+## (x2)Add in a Time variable: created which we'll use for the trend or between-year variable; I scale by 1000 as discussed above
+Medulis <- transform(Medulis, Time = as.numeric(Date) / 1000)
+
+# Uso month como (x1) variable seasonal or within-year variation
+Ms <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time),data = Medulis, family=Gamma (link="log"), method="REML")
+draw(Ms, residuals = TRUE) #bs basis type for the smooth term; "cc" cyclic cubic spline, which we want for the seasonal term as there should be no discontinuity between January and December
+appraise(Ms)
+summary(Ms)
+gam.check(Ms) 
+
+# uso Day como x1 variable seasonal or within-year variation
+Ms <- gam(Medulis$STX ~ s(Day, bs = "cc", k = 12) + s(Time),data = Medulis, family=Gamma (link="log"), method="REML")
+draw(Ms, residuals = TRUE) #bs basis type for the smooth term; "cc" cyclic cubic spline, which we want for the seasonal term as there should be no discontinuity between January and December
+appraise(Ms) 
+summary(Ms) # Day es no significativo 
+gam.check(Ms) 
+
+
+#grafico Autocorrelacion
+E <- residuals(M)
+I1 <- !is.na(Medulis$STX)
+Efull <- vector(length = length(Medulis$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#agrego autocorrelacion
+
+# corARMA(form = ~ 1|Year, p = x) fit an ARMA process to the residual
+# where p indicates the order for the AR part of the ARMA model
+# form = ~ 1|Year means that the ARMA is nested within each year
+
+## AR(1)
+ 
+Ms1 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 1))
+draw(Ms1, residuals = TRUE)
+plot.gam(Ms1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(Ms1)
+summary(Ms1)
+gam.check(Ms1) 
+
+## AR(2)
+Ms2 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 2))
+draw(Ms2, residuals = TRUE)
+plot.gam(Ms2,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(Ms2)
+summary(Ms2)
+gam.check(Ms2)
+
+## AR(3)
+Ms3 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 3))
+draw(Ms3, residuals = TRUE)
+plot.gam(Ms3,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(Ms3)
+summary(Ms3)
+gam.check(Ms3)
+
+
+AIC(Ms,Ms1, Ms2, Ms3)# no hay diferencia en el orden de ARMA ni sin ACF
+
+## SEASONAL + JERARQUICO
+
+# GS (Time y Month anidados en Area)
+
+MsGS1 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time) + s(Month, Area,bs="fs", m=2) + s(Time,Area,bs="fs", m=2),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 1))
+draw(MsGS1, residuals = TRUE)
+plot.gam(MsGS1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(MsGs1)
+summary(MsGs1)
+gam.check(MsGs1) 
+
+M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+
+#GI
+MsGI1 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time) + s(Month, by= Area,m=1, bs="tp") + s(Time, by= Area, m=1, bs="tp") + s(Area, bs="re"),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 1))
+draw(MsGI1, residuals = TRUE)
+plot.gam(MsGI1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(MsGI1)
+summary(MsGI1)
+gam.check(MsGI1) # Error in check_is_mgcv_smooth(smooth) :Object passed to 'smooth' is not a 'mgcv.smooth'
+
+
+
+
+
+#---------------------------------------------------------------------------#
 
 # 2) cholga   
 Aater <- read_excel("Data/Aater.xlsx")
@@ -684,59 +856,11 @@ summary(M3B)
 
 AIC(M3,M3A,M3B)
 
-## Modelos jerarquico
-## smooth.terms {mgcv}
-# Factor smooth interactions
-# bs="fs" Smooth factor interactions are often produced using by variables (see gam.models), but a special smoother class (see factor.smooth.interaction) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. 
-
-## GS: A single common smoother plus group-level smoothers that have the same wiggliness
-
-#1)
-Medulis <- read_excel("Data/Medulis.xlsx")
-names(Medulis)
-str(Medulis)
-
-Medulis$STX <- Medulis$STX + 0.001
-Medulis$STX
-Medulis$Area<-as.factor(Medulis$Area)
-Medulis$Date<-as.numeric(Medulis$Date)
-
-#CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
-
-
-M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
-
-# luego agregar correlacion 
-# correlation = corAR1(form =~ Date))
-
-plot.gam(M1AGS,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(M1AGS, residuals = TRUE)
-appraise(M1AGS)
-summary(M1AGS) ##Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0.5) :
-               #le modle a des lissages 1-d rpts des mmes variables
-
-## Model GS
-#zoo_daph_modGS <- gam(density_adj ??? s(day, bs="cc", k=10) +
-                      #  s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +
-                       # s(lake, year_f, bs="re"),
-                     # data=daphnia_train, knots=list(day=c(0, 365)),
-                     # family=Gamma(link="log"), method="REML",
-                     # drop.unused.levels=FALSE)
-
-M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
 
 
-## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
-
-#CO2_modGI <- gam(log(uptake) ??? s(log(conc), k=5, m=2, bs="tp") + s(log(conc), by=Plant_uo, k=5, m=1, bs="tp") + s(Plant_uo, bs="re", k=12), data=CO2, method="REML")
 
 
-M1AGI <- gam(Medulis$STX ~ s(Date, m=2, bs="tp") + s(Date, by=Area, m=1, bs="tp") + s(Area, bs="re"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
-draw(M1AGI, residuals = TRUE)
-appraise(M1AGI)
-summary(M1AGI)
-gam.check(M1AGI) 
 
 # luego agregar correlacion # correlation = corAR1(form =~ Date))
 
@@ -750,16 +874,9 @@ gam.check(M1AGI)
 # k.check(test) EDF< k
 
 
-
-
 # ciclic smoothers seasonal data
 # knots: need to specify start and end points for our cycles
 #  specify this smoother type as a factor-smooth interaction term using the xt
-
-
-
-
-
 
 ## #. Note that we also include a random
 # smoother for both taxon and taxon:year_f, where year_f is year transformed
