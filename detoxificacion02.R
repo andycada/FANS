@@ -160,13 +160,10 @@ summary(model6)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
 draw(model6,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model6) # chequea el modelo, residuales, etc
 
-
 AIC(model0,model1,model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
 
 ## Modelo con autocorrelacion  para ver si mejoran los modelos 6 y 4 ------------------##
 
-library(readxl)
-DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 str(DETOX2)
 
 
@@ -205,42 +202,109 @@ draw(model4A,residuals=T)
 appraise(model4A) 
 summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 49%
 
+# no toma la autocorrelacion pero el ajuste no es tan malo 
+
+## Graficos -------------##
+
+require(ggplot2)
+
+ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + geom_line() + facet_grid( area ~ organism,scale="free_y") + geom_smooth(se=FALSE) 
 
 
 
 
-### Modelos jerarquicos
+### Modelos jerarquicos -------------------------------------------------------------##
 
 ## GS: A single common smoother plus group-level smoothers that have the same wiggliness
-
 
 # CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
 # M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, m=2,bs="fs"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
+model6GS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+plot.gam(model6GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6GS,residuals=T) 
+appraise(model6GS) 
+summary(model6GS) #R-sq.(adj) =  0.153   Deviance explained =   44%
 
-model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+
+model4GS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+plot.gam(model4GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4GS,residuals=T) 
+appraise(model4GS) 
+summary(model4GS) # R-sq.(adj) =  0.218   Deviance explained = 47.5%
+
+
+# grafico ACF 
+
+# model6GS
+E <- residuals(model6GS)
+I1 <- !is.na(DETOX2$STX)
+Efull <- vector(length = length(DETOX2$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+#model4GS
+E <- residuals(model4GS)
+I1 <- !is.na(DETOX2$STX)
+Efull <- vector(length = length(DETOX2$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+
+# agrego ACF a los modelos 4 y  6 GS
+
+model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
 plot.gam(model6AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6AGS,residuals=T) 
 appraise(model6AGS) 
-summary(model6AGS) # Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0.5) :  le modle a des lissages 1-d rpts des mmes variables
+summary(model6AGS) # no  toma bien la autocorrelacion 
 
 
-model4A <- gam(STX ~ s(Days,by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
-plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4A,residuals=T) 
-appraise(model4A) 
-summary(model4A) 
+model4AGS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
+plot.gam(model4AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4AGS,residuals=T) 
+appraise(model4AGS) 
+summary(model4AGS) # no  toma bien la autocorrelacion
+
+
+AIC(model6GS,model4GS,model6AGS,model4AGS)# el model4AGs es el mejor pero no toma la autocorrelacion
 
 
 ## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
 
 #CO2_modGI <- gam(log(uptake) ??? s(log(conc), k=5, m=2, bs="tp") + s(log(conc), by=Plant_uo, k=5, m=1, bs="tp") + s(Plant_uo, bs="re", k=12), data=CO2, method="REML")
 
-model6AGI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML")
+model6GI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML")
+plot.gam(model6GI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6GI,residuals=T) 
+appraise(model6GI) 
+summary(model6GI) # R-sq.(adj) =  0.235   Deviance explained = 49.5%
+
+
+#Grafico ACF
+E <- residuals(model6GI)
+I1 <- !is.na(DETOX2$STX)
+Efull <- vector(length = length(DETOX2$STX))
+Efull <- NA
+Efull[I1] <- E
+acf(Efull, na.action = na.pass,
+    main = "Auto-correlation plot for residuals")
+
+
+
+# agrego ACF
+model6AGI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
 plot.gam(model6AGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6AGI,residuals=T) 
+draw(model6AGI,residuals=T) # no lo grafica
 appraise(model6AGI) 
-summary(model6AGI) 
+summary(model6AGI) # no toma la autocorrelacion 
+
+
+AIC(model6GS,model4GS,model6AGS,model4AGS,model6GI,model6AGI) # modelo 6GI es el mejor
 
 
 
@@ -249,6 +313,21 @@ summary(model6AGI)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#----------------------------------------------------------------------------------------------#
 
 #  Modelo jerarquico con autocorrelacion (Zhur 2009)
 
