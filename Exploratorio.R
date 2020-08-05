@@ -485,7 +485,7 @@ drop1(GLM6, test="F")
 anova(GLM6)
 
 
-##-- GAMS exploratorios---------------------------------------------------#####
+##-- GAMS exploratorios---------------------------------------------------################################
 
 # 1) sitio BBE, BBF, PP para mejillon (archivo Medulis)
 # 2) sitio BBB y BBE para cholga (archivo Aater)
@@ -522,7 +522,8 @@ require(gratia)
 
 
 # con STx transformada en r directamente 
-# uso variable time o tengo que convertir date en variable numerica
+# uso variable time o tengo que convertir date en variable numerica para que funcione el modelo sino me tira error
+# Error in names(dat) <- object$term : 'names' attribute [1] must be the same length as the vector [0]
 
 M1 <- gam(Medulis$STX ~ s(Time) + Area, data=Medulis,family=Gamma (link="log"), method = "REML") 
 plot.gam(M1,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
@@ -557,7 +558,6 @@ acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
 
 
-## donde dice Date ver de cambiar pot time o year
 # Incluyo autocorrelacion AR-1 
 
 M1A<- gam(Medulis$STX ~ s(Time) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Time))
@@ -567,7 +567,7 @@ appraise(M1A)
 summary(M1A)
 
 
-M1B<- gam(Medulis$STX ~ s(Date, by= Area), na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Time))
+M1B<- gam(Medulis$STX ~ s(Time, by= Area), na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corAR1(form =~ Time))
 plot.gam(M1B,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M1B, residuals = TRUE)
 appraise(M1B)
@@ -580,7 +580,7 @@ draw(M2, residuals = TRUE)
 appraise(M2)
 
 # Cor ARMA
-M1C<- gam(Medulis$STX ~ s(Date) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
+M1C<- gam(Medulis$STX ~ s(Time) + Area, na.action = na.omit, data = Medulis,family=Gamma (link="log"), correlation = corARMA(value=c(0.2,-0.2),form =~ Date | Area, p=2, q=0))
 summary(M1C)
 plot.gam(M1C,xlab= "Date",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(M1C, residuals = TRUE)
@@ -588,7 +588,7 @@ appraise(M1C)
 summary(M1C)
 
 
-# form argument within this argument is used to tell R that the order of the data is determined by the variable Date
+# corARMA form argument is used to tell R that the order of the data is determined by the variable Date/ time/Year
 
 AIC(M1,M1A,M1B,M1C) # M1A, M1C los mejorcitos pero feo el ajuste      
 
@@ -602,17 +602,17 @@ AIC(M1,M1A,M1B,M1C) # M1A, M1C los mejorcitos pero feo el ajuste
 ## GS: A single common smoother plus group-level smoothers that have the same wiggliness
 
 #1)
-Medulis <- read_excel("Data/Medulis.xlsx")
+
 names(Medulis)
 str(Medulis)
-
 
 #CO2_modGS <- gam(log(uptake) ~  s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
 
 
-M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+M1AGS <- gam(Medulis$STX ~ s(Time, k=5, m=2) + s(Time, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
-M1AGS <- gam(Medulis$STX ~ s(Date, m=2) + s(Date, Area, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+
+M1AGS <- gam(Medulis$STX ~ s(Time, m=2) + s(Time, Area, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
 
 # luego agregar correlacion = corAR1(form =~ Date))
@@ -629,9 +629,6 @@ summary(M1AGS) ##Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0
                      # data=daphnia_train, knots=list(day=c(0, 365)),
                      # family=Gamma(link="log"), method="REML",
                      # drop.unused.levels=FALSE)
-
-M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
-
 
 
 ## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
@@ -663,6 +660,8 @@ gam.check(M1AGI)
 Medulis$Month<-as.numeric(Medulis$Month)
 Medulis$Month 
 Medulis$Day<-as.numeric(Medulis$Day)
+Medulis$Year<-as.numeric(Medulis$Year)
+
 
 str(Medulis)
 
@@ -687,7 +686,7 @@ gam.check(Ms)
 
 
 #grafico Autocorrelacion
-E <- residuals(M)
+E <- residuals(Ms)
 I1 <- !is.na(Medulis$STX)
 Efull <- vector(length = length(Medulis$STX))
 Efull <- NA
@@ -695,8 +694,7 @@ Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
 
-#agrego autocorrelacion
-
+# agrego autocorrelacion
 # corARMA(form = ~ 1|Year, p = x) fit an ARMA process to the residual
 # where p indicates the order for the AR part of the ARMA model
 # form = ~ 1|Year means that the ARMA is nested within each year
@@ -727,7 +725,7 @@ summary(Ms3)
 gam.check(Ms3)
 
 
-AIC(Ms,Ms1, Ms2, Ms3)# no hay diferencia en el orden de ARMA ni sin ACF
+
 
 ## SEASONAL + JERARQUICO
 
@@ -735,21 +733,26 @@ AIC(Ms,Ms1, Ms2, Ms3)# no hay diferencia en el orden de ARMA ni sin ACF
 
 MsGS1 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time) + s(Month, Area,bs="fs", m=2) + s(Time,Area,bs="fs", m=2),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 1))
 draw(MsGS1, residuals = TRUE)
-plot.gam(MsGS1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-appraise(MsGs1)
-summary(MsGs1)
-gam.check(MsGs1) 
-
-M1BGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, bs="fs", m=2), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
+appraise(MsGS1)
+summary(MsGS1)
+gam.check(MsGS1) 
 
 
-#GI
+# GI
 MsGI1 <- gam(Medulis$STX ~ s(Month, bs = "cc", k = 12) + s(Time) + s(Month, by= Area,m=1, bs="tp") + s(Time, by= Area, m=1, bs="tp") + s(Area, bs="re"),data = Medulis, family=Gamma (link="log"), method="REML",correlation = corARMA(form = ~ 1|Year, p = 1))
 draw(MsGI1, residuals = TRUE)
-plot.gam(MsGI1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 appraise(MsGI1)
 summary(MsGI1)
 gam.check(MsGI1) # Error in check_is_mgcv_smooth(smooth) :Object passed to 'smooth' is not a 'mgcv.smooth'
+
+
+
+
+
+
+
+
+
 
 
 
@@ -858,10 +861,6 @@ AIC(M3,M3A,M3B)
 
 
 
-
-
-
-
 # luego agregar correlacion # correlation = corAR1(form =~ Date))
 
 #zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") +
@@ -872,7 +871,6 @@ AIC(M3,M3A,M3B)
                      # drop.unused.levels=FALSE)
 
 # k.check(test) EDF< k
-
 
 # ciclic smoothers seasonal data
 # knots: need to specify start and end points for our cycles
