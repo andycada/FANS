@@ -270,6 +270,13 @@ draw(model4AGS,residuals=T)
 appraise(model4AGS) 
 summary(model4AGS) # no  toma bien la autocorrelacion
 
+# ACF anidada en area 
+model4AGS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model4AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4AGS,residuals=T) 
+appraise(model4AGS) # no toma la autocorrelacion
+summary(model4AGS) 
+
 
 AIC(model6GS,model4GS,model6AGS,model4AGS)# el model4AGs es el mejor pero no toma la autocorrelacion
 
@@ -300,59 +307,168 @@ acf(Efull, na.action = na.pass,
 model6AGI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
 plot.gam(model6AGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6AGI,residuals=T) # no lo grafica
-appraise(model6AGI) 
+appraise(model6AGI) #R-sq.(adj) =  0.235   Deviance explained = 49.5%
 summary(model6AGI) # no toma la autocorrelacion 
 
 
 AIC(model6GS,model4GS,model6AGS,model4AGS,model6GI,model6AGI) # modelo 6GI es el mejor
 
 
+### Agrego variables ambientales al modelo --------------------------------------------------##
+
+library(readxl)
+DETOX3 <- read_excel("Data/STXmax-Totalarea-DaysT.xlsx")
+names(DETOX3)
+str(DETOX3)
+
+DETOX3$area<- as.factor(DETOX3$area)
+DETOX3$organism<- as.factor(DETOX3$organism)
+DETOX3$Date<-as.Date(DETOX3$Date)
+
+
+model7<- gam(STX ~ s(Tmed) +  s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
+plot.gam(model6AGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model6AGI,residuals=T) # no lo grafica
+appraise(model6AGI) 
+summary(model6AGI)# R-sq.(adj) =  0.235   Deviance explained = 49.5%
+
+
+model8<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs")+ s(Tmed), data = DETOX3,family=Gamma (link="log"), method="REML")
+plot.gam(model8,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model8,residuals=T) 
+appraise(model8) #R-sq.(adj) =  0.293   Deviance explained = 53.1%
+summary(model8)  
+
+# agrego correlacion anidada correlation = corARMA(form =~ Days | area))
+model8c<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs")+ s(Tmed), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model8c,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model8c,residuals=T) 
+appraise(model8c) # no toma la ACF
+summary(model8c)  # R-sq.(adj) =  0.293   Deviance explained = 53.1%
+
+
+#solo Temperatura media
+model7<- gam(STX ~ s(Tmed), data = DETOX3,family=Gamma (link="log"), method="REML")
+plot.gam(model7,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model7,residuals=T) 
+appraise(model7) 
+summary(model7) # R-sq.(adj) =  0.129   Deviance explained = 30.7%
+
+# DE ARCHIVO EXPLORATORIO PREVIO (detoxificacion-ambiental) el sig modelo era el mejor,le agrego la parte jerarquica 
+
+#model0 <- gam(µg_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
+#plot.gam(model0,residuals=T,pch=1,all.terms=T,seWithMean=T,pages=1)
+#draw(model0,residuals=T) #dibuja el GAMs y los puntos son los residuales
+#appraise(model0) 
+#summary(model0) #R-sq.(adj) =  0.276   Deviance explained = 51.5% los 3 sig 
+#gam.check(model0)
+
+
+model9<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs")+ s(Tmed) + s(Viento_Med) + s(Precip), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model9,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model9,residuals=T) 
+appraise(model9) # no toma la autocorrelacion
+summary(model9) #R-sq.(adj) =  0.327   Deviance explained = 58.3%, precip y Days (organism) no son sign
+
+
+AIC(model7,model8,model8c, model9)# modelo 9 es el mejorcito
+
+#uso Tac-10D, Vac-10D y Pac-7D
+#model0 <- gam(µg_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
+
+
+model10<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs")+ s(Tac_10D) + s(Vac_10D) + s(Pac_7D), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model10,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model10,residuals=T) 
+appraise(model10) # no toma la autocorrelacion
+summary(model10) #R-sq.(adj) =  0.348   Deviance explained = 60.3%, Days,orga y prec no significativos
+
+# saco preci y Days, organism q son no significativos
+
+model11<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Tac_10D) + s(Vac_10D), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model11,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model11,residuals=T) 
+appraise(model11) # no toma la autocorrelacion
+summary(model11) #R-sq.(adj) =  0.352   Deviance explained = 60.3%
+gam.check(model11) # aumentar k Tac y de Vac (k=9)
+
+# pruebo diferente k pero siguen siendo significactivas 
+model11<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Tac_10D, k=40) + s(Vac_10D,k=45), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
+plot.gam(model11,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model11,residuals=T) 
+appraise(model11) # no toma la autocorrelacion
+summary(model11) #R-sq.(adj) =  0.352   Deviance explained = 60.3%
+gam.check(model11)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+AIC(model7,model8,model8c, model9, model10, model11) # el model11 es el mejor
 
 #----------------------------------------------------------------------------------------------#
 
-#  Modelo jerarquico con autocorrelacion (Zhur 2009)
+#  Modelo para cada curva de detoxificacion por separado, con autocorrelacion (Zhur 2009)
 
 library(readxl)
-DETOX2J <- read_excel("Data/DETOX-jerarquico.xlsx")
-str(DETOX2J)
-DETOX2J$BBEC1
+DETOX3 <- read_excel("Data/DETOX-jerarquico.xlsx")
+str(DETOX3)
+names(DETOX3)
 
-DETOX2J <- c(DETOX2J$BBEC1 , DETOX2J$BBEC2,DETOX2J$BBEC3,
-             DETOX2J$BBEM1, DETOX2$BBEM2,DETOX2$BBEM3, DETOX2$BBEM4,
-             DETOX2J$BBFM1, DETOX2J$BBFM2, DETOX2J$PPM1)
-Time <- rep(Hawaii$Year, 4)
-> Rain <- rep(Hawaii$Rainfall, 4)
-> ID <- factor(rep(c("Stilt.Oahu", "Stilt.Maui",
-                     "Coot.Oahu", "Coot.Maui"),
-                   each = length(Hawaii$Year)))
-> library(lattice)
-> xyplot(Birds ??? Time | ID, col = 1)
-> library(mgcv)
-> BM1<-gamm(Birds ??? Rain + ID +
-              s(Time, by = as.numeric(ID == "Stilt.Oahu")) +
-              s(Time, by = as.numeric(ID == "Stilt.Maui")) +
-              s(Time, by = as.numeric(ID == "Coot.Oahu")) +
-              s(Time, by = as.numeric(ID == "Coot.Maui")),
-            weights = varIdent(form =??? 1 | ID))
+mussels <- c(DETOX3$BBEC1, DETOX3$BBEC2, DETOX3$BBEC3, DETOX3$BBEM1,DETOX3$BBEM2,DETOX3$BBEM3, DETOX3$BBEM4,DETOX3$BBFM1, DETOX3$BBFM2, DETOX3$PPM1)
+Time <- rep(DETOX3$Days, 10)
+ID <- factor(rep(c("DETOX3$BBEC1", "DETOX3$BBEC2", "DETOX3$BBEC3", "DETOX3$BBEM1","DETOX3$BBEM2","DETOX3$BBEM3", "DETOX3$BBEM4","DETOX3$BBFM1", "DETOX3$BBFM2", "DETOX3$PPM1"),
+                 each = length(DETOX3$Days)))
+library(lattice)
+xyplot(mussels ??? Time | ID, col = 1)
+M0<-gam(mussels ???  ID +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEC1")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEC2")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEC3")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEM1")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEM2")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEM3")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBEM4")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBFM1")) +
+              s(Time, by = as.numeric(ID == "DETOX3$BBFM2")) +
+             s(Time, by = as.numeric(ID == "DETOX3$PPM1")), family=Gamma (link="log"), method="REML")
+
+
+plot.gam(M0,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M0,residuals=T) # no lo grafica
+appraise(M0) 
+summary(M0)
+
+
+# agrego autocorrelacion
+M1<-gam(mussels ???  ID +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEC1")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEC2")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEC3")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEM1")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEM2")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEM3")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBEM4")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBFM1")) +
+          s(Time, by = as.numeric(ID == "DETOX3$BBFM2")) +
+          s(Time, by = as.numeric(ID == "DETOX3$PPM1")), family=Gamma (link="log"), method="REML", correlation = corAR1(form =??? Time | ID ))
+
+
+
+plot.gam(M1,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(M1,residuals=T) # no lo grafica
+appraise(M1) 
+summary(M1) # R-sq.(adj) =  0.789   Deviance explained = 90.6% 
+
+
+
+
+
+
+
+
+
+
+
+
 
 #--------------------------------------------#
 

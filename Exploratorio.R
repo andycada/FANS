@@ -511,17 +511,19 @@ Medulis$Date<-as.Date(Medulis$Date)
 # Time variable: created which we'll use for the trend or between-year variable; I scale by 1000 as discussed above
 Medulis <- transform(Medulis, Time = as.numeric(Date) / 1000)
 
+#Graficos 
 require(ggplot2)
 ggplot(Medulis, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") + geom_smooth(se=FALSE) 
 
 ggplot(Medulis , aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ season,scale="free_y") + geom_smooth(se=FALSE) 
 
 
+
+
 library(mgcv)
 require(gratia)
-
-
-# con STx transformada en r directamente 
+ 
+# uso STx transformada en r directamente (STX + 0.0001)
 # uso variable time o tengo que convertir date en variable numerica para que funcione el modelo sino me tira error
 # Error in names(dat) <- object$term : 'names' attribute [1] must be the same length as the vector [0]
 
@@ -747,11 +749,17 @@ gam.check(MsGI1) # Error in check_is_mgcv_smooth(smooth) :Object passed to 'smoo
 
 
 
+# probar esta correlation correlation = corCompSymm(form =??? Year)) pag 148 Zhur
+# correlation argument corAR1: form argument is now essential as R needs to know position of the observations over time.
+# ver pag 151 Zhur
+# Note that the auto-correlation function in Fig. 6.3 becomes positive again for larger time lags. 
+# This suggests that an error structure that allows for a sinusoidal pattern may be more appropriate.
 
-
-
-
-
+# correlation = corAR1(form =??? Time | ID ) PROBAR ESTO CON ID correlation is applied at the deepest level
+# The correlation between residuals of different time series is assumed to be 0.
+# correlation is applied at the deepest level: Observations of the same time series. This means that all time series have the same ??.
+# The form option specifies that the temporal order of the data is specified by the variable Time, and the time series are nested.
+# The auto-correlation is therefore applied at the deepest level (on each individual time series), and we get one ?? for all four time series.
 
 
 
