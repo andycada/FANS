@@ -100,6 +100,14 @@ DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 names(DETOX2)
 str(DETOX2)
 
+#
+# Ver los datos!
+#
+require(ggplot2)
+theme_set(theme_bw())
+
+ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + geom_line() + facet_grid( area ~ organism,scale="free_y") + geom_smooth(se=FALSE) 
+
 model0 <- gam(STX ~ s(Days), data = DETOX2, method = "REML") 
 plot.gam(model0,residuals=T,pch=1,all.terms=T,seWithMean=T)
 summary(model0)  # 
@@ -144,6 +152,7 @@ appraise(model3) # chequea el modelo, residuales, etc
 model4 <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model4,xlab= "Detoxification days",residuals=T,pch=500,all.terms=T,seWithMean=T, pages=1)
 summary(model4)  #R--sq.(adj) =  0.202   Deviance explained = 45.9%, todos sig y lindos graficos ###########
+gam.check(model4, pages=1)
 draw(model4,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model4) # chequea el modelo, residuales, etc
 
@@ -356,7 +365,7 @@ summary(model7) # R-sq.(adj) =  0.129   Deviance explained = 30.7%
 
 # DE ARCHIVO EXPLORATORIO PREVIO (detoxificacion-ambiental) el sig modelo era el mejor,le agrego la parte jerarquica 
 
-#model0 <- gam(µg_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
+#model0 <- gam(?g_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
 #plot.gam(model0,residuals=T,pch=1,all.terms=T,seWithMean=T,pages=1)
 #draw(model0,residuals=T) #dibuja el GAMs y los puntos son los residuales
 #appraise(model0) 
@@ -374,7 +383,7 @@ summary(model9) #R-sq.(adj) =  0.327   Deviance explained = 58.3%, precip y Days
 AIC(model7,model8,model8c, model9)# modelo 9 es el mejorcito
 
 #uso Tac-10D, Vac-10D y Pac-7D
-#model0 <- gam(µg_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
+#model0 <- gam(?g_STX ~ s(DAYS) + s(Tac_10D, k=25) + s(Vac_10D, k=35), data = DETOX3, family=Gamma (link="log"),method = "REML") 
 
 
 model10<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs")+ s(Tac_10D) + s(Vac_10D) + s(Pac_7D), data = DETOX3,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
