@@ -229,6 +229,10 @@ ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + geom_line() + fac
 # CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
 # M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, m=2,bs="fs"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
+# Filtrar una sola especie (paquete tidyverse)
+#
+DETOX2_medulis <- DETOX2 %>% filter(organism == "M. edulis" )
+
 model6GS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model6GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GS,residuals=T) 
@@ -266,7 +270,7 @@ acf(Efull, na.action = na.pass,
 
 # agrego ACF a los modelos 4 y  6 GS
 
-model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
+model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ 1|area))
 plot.gam(model6AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6AGS,residuals=T) 
 appraise(model6AGS) 
