@@ -632,6 +632,16 @@ summary(M1AGS) ##Warning message: In gam.side(sm, X, tol = .Machine$double.eps^0
                      # family=Gamma(link="log"), method="REML",
                      # drop.unused.levels=FALSE)
 
+M2AGS <- gam(Medulis$STX ~ s(Day, bs="cc", k=10) + s(Day, Area,k=10, bs="fs", xt=list(bs="cc"))+ s(Area, Year, bs="re"),na.action = na.omit,data = Medulis, knots=list(Day=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(M2AGS, residuals = TRUE)
+appraise(M2AGS)
+summary(M2AGS)
+
+names(Medulis)
+str(Medulis)
+# year-F tiene q ser factor
+Medulis$Year<-as.factor(Medulis$Year)
+
 
 ## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
 
