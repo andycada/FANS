@@ -58,6 +58,12 @@ layout(1)
 # Prueba de Kruskal-Wallis para dos o m?s muestras independientes
 #no-parametrica, no asume normalidad pero si homocedasticidad
 
+# Filtrar una sola especie (paquete tidyverse)
+#
+data <- data %>% filter(Organism == "M. edulis" )
+
+ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
+
 k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
 k1 #p-value < 2.2e-16
 
@@ -69,6 +75,13 @@ TukeyHSD(a2,"season") # dif sig en la estacion  (summer> autumn> spring> winter)
 layout(matrix(c(1:6), 2, 3)) 
 plot(a2, 1:6) # no parece mejorar cn transformacion log
 layout(1)
+
+ggplot(d_sorted, aes(x=STX,color=season)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
+
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() 
+
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+
 
 k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
 k2 #p-value < 2.2e-16
