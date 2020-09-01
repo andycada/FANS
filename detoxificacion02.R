@@ -1,7 +1,10 @@
-
 # Detoxificacion 
 
 # Uso los datos totales, sin separar por evento toxico, saco las curvas de 5-8 observaciones para ver si mejora el ajuste 
+# k.check() es OK CUANDO
+# EDF < (k')
+# p-value for the k-index (which measures pattern in the residuals) not significant
+#Total deviance BUSCAR LA MENOR
 
 library(readxl)
 DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
@@ -9,67 +12,45 @@ DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 names(DETOX2)
 str(DETOX2)
 
-#
-# Ver los datos!
-#
+#Graficos 
+
 require(ggplot2)
 theme_set(theme_bw())
 
 ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area ~ organism,scale="free_y") + geom_line() + geom_smooth(se=FALSE) 
 
-model0 <- gam(STX ~ s(Days), data = DETOX2, method = "REML") 
-plot.gam(model0,residuals=T,pch=1,all.terms=T,seWithMean=T)
-summary(model0)  # 
-gam.check(model0)
+library(mgcv)
+require(gratia)
 
 #---------------------------------------------
 # pruebo area y organism como variables categoricas
 
-library(mgcv)
-require(gratia)
-
 DETOX2$area<-as.factor(DETOX2$area)
 DETOX2$organism<-as.factor(DETOX2$organism)
+str(DETOX2)
 
-class(DETOX2$area)
-class(DETOX2$organism)
-class(DETOX2$Days)
-
-layout(1)
-model1 <- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma, method = "REML") 
-plot.gam(model1,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(model1)  #R-sq.(adj) =   0.25   Deviance explained = 43.3% ################
-gam.check(model1, pages=1)
-draw(model1,residuals=T) #dibuja el GAMs y los puntos son los residuales
-appraise(model1) # chequea el modelo, residuales, etc
-
-
-model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma, method = "REML") 
+model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model2,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(model2)  #R-sq.(adj) =   0.259   Deviance explained = 46.2%, sig BBE y PP pero los graficos no se ve nada
-gam.check(model2, pages=1)
+summary(model2)  #R-sq.(adj) =  0.221   Deviance explained = 44.7
 draw(model2,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model2) # chequea el modelo, residuales, etc
 
 
-model3 <- gam(STX ~ s(Days,  by = organism), data = DETOX2,family=Gamma, method = "REML") 
+model3 <- gam(STX ~ s(Days,  by = organism), data = DETOX2,family=Gamma (link="log") , method = "REML") 
 plot.gam(model3,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-summary(model3)  #R-sq.(adj) =   0.191   Deviance explained = 39.3%, sig cholga y meji pero los graficos no dan nada
-gam.check(model3, pages=1)
+summary(model3)  #R-sq.(adj) =   0.168   Deviance explained = 40.6%, sig cholga y meji 
 draw(model3,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model3) # chequea el modelo, residuales, etc
 
 model4 <- gam(STX ~ s(Days,  by = area) + organism, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model4,xlab= "Detoxification days",residuals=T,pch=500,all.terms=T,seWithMean=T, pages=1)
 summary(model4)  #R--sq.(adj) =  0.202   Deviance explained = 45.9%, todos sig y lindos graficos ###########
-gam.check(model4, pages=1)
 draw(model4,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model4) # chequea el modelo, residuales, etc
 
-model5 <- gam(STX ~ s(Days,  by = organism) + area, data = DETOX2,family=Gamma, method = "REML") 
+model5 <- gam(STX ~ s(Days,  by = organism) + area, data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model5,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model5)  #R--sq.(adj) =   0.26   Deviance explained = 44.1%, sig cholga y meji pero los graficos no dan nada
-gam.check(model5, pages=1)
 draw(model5,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model5) # chequea el modelo, residuales, etc
 
@@ -79,12 +60,11 @@ summary(model6)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
 draw(model6,residuals=T) #dibuja el GAMs y los puntos son los residuales
 appraise(model6) # chequea el modelo, residuales, etc
 
-AIC(model0,model1,model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
+AIC(model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
 
 ## Modelo con autocorrelacion  para ver si mejoran los modelos 6 y 4 ------------------##
 
 str(DETOX2)
-
 
 # Grafico Autocorrelacion
 
@@ -112,29 +92,23 @@ model6A<- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link=
 plot.gam(model6A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6A,residuals=T) 
 appraise(model6A) 
-summary(model6A)  #R-sq.(adj) =  0.162   Deviance explained = 44.7%
+summary(model6A)  #R-sq.(adj) =  0.164   Deviance explained = 45.1% aumento la deviance respecto de model 6 (44,7)
 
 
 model4A <- gam(STX ~ s(Days,by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
 plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4A,residuals=T) 
 appraise(model4A) 
-summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 49%
+summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 49% aumenta respecto de model 4(45.9) 
 
-# no toma la autocorrelacion pero el ajuste no es tan malo 
+# no se ve calculo de autocorrelacion pero aumenta la deviance de modelos con AC vs sin AC
 
-## Graficos -------------##
-
-require(ggplot2)
-
-ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + geom_line() + facet_grid( area ~ organism,scale="free_y") + geom_smooth(se=FALSE) 
+AIC(model4,model6, model4A, model6A) #los modelos sin AC (AR-1) son mejores
 
 
+## Modelos jerarquicos -------------------------------------------------------------##
 
-
-### Modelos jerarquicos -------------------------------------------------------------##
-
-## GS: A single common smoother plus group-level smoothers that have the same wiggliness
+### GS: A single common smoother plus group-level smoothers that have the same wiggliness
 
 # CO2_modGS <- gam(log(uptake) ??? s(log(conc), k=5, m=2) + s(log(conc), Plant_uo, k=5, bs="fs", m=2), data=CO2, method="REML")
 # M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, m=2,bs="fs"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
@@ -153,15 +127,13 @@ draw(model4GS,residuals=T)
 appraise(model4GS) 
 summary(model4GS) # R-sq.(adj) =  0.218   Deviance explained = 47.5% (mejora el ajuste)
 
-# estos dos modelos estan ok, ahora probar usar la funcion predict 
-
-# Filtrar una sola especie (paquete tidyverse) y probar de nuevo #--------------------------#
+## Filtros datos totales por especie (paquete tidyverse) y area para ver si mejoran los modelos
 
 library(tidyverse)
 theme_set(theme_bw())
 
 
-## Areas (BBF, BBE, PP) para 1 organismo (M. edulis)####
+# MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 
 model6GSM<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
@@ -177,8 +149,11 @@ draw(model4GSM,residuals=T)
 appraise(model4GSM) 
 summary(model4GSM) # R-sq.(adj) =  0.218   Deviance explained = 45.4%
 
-AIC(model6GS,model4GS,model6GSM,model4GSM)# el mas chico es model4GSM (datos filtrados)
+# Modelos GS filtrados mejillon vs generales (sin filtrar)
+AIC(model6GS,model4GS,model6GSM,model4GSM)# el mas chico es model4GSM filtrado para mejillon
 
+
+## CHOLGA (A. ater)en areas (BB, BF)-------------------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 
 model6GSA<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
@@ -194,11 +169,11 @@ draw(model4GSA,residuals=T)
 appraise(model4GSA) #R-sq.(adj) =  0.266   Deviance explained = 59.2%
 summary(model4GSA)
 
-
+# Modelos GS filtrados cholga vs generales (sin filtrar)
 AIC(model6GS,model4GS,model6GSA,model4GSA) # los modelos filtrados (cholga) son mejores que los globales 
 
 
-## Organismos para 1 area (BBE) ####
+## BBE 2 Organismos para 1 area ------------------------------------#
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
 
 model6GSBBE<- gam(STX ~ s(Days, k=5, m=2) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
@@ -206,21 +181,20 @@ plot.gam(model6GSBBE,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSBBE,residuals=T) 
 appraise(model6GSBBE) 
 summary(model6GSBBE) #R-sq.(adj) =  0.153   Deviance explained =   35.7%
-
+k.check(model6GSBBE)
 
 model4GSBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 plot.gam(model4GSBBE,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GSBBE,residuals=T) 
 appraise(model4GSBBE) 
 summary(model4GSBBE) #R-sq.(adj) =  0.165   Deviance explained = 43.3%
+k.check(model4GSBBE)
+
+# Modelos GS filtrados para area BBE vs generales (sin filtrar)
+AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # los modelos filtrados son los mejores  
 
 
-# comparacion de modelos sin filtrar y solo para BBE
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # el 1ro sin filtrar es el mejor 
-
-
-##  ACF--------------------------------###
-# grafico ACF 
+# Grafico Autocorrelacion
 
 # model6GS
 E <- residuals(model6GS)
@@ -231,7 +205,7 @@ Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
 
-#model4GS
+# model4GS
 E <- residuals(model4GS)
 I1 <- !is.na(DETOX2$STX)
 Efull <- vector(length = length(DETOX2$STX))
@@ -249,11 +223,10 @@ draw(model6AGS,residuals=T)
 appraise(model6AGS) 
 summary(model6AGS) # no  toma bien la autocorrelacion 
 
-
 model4AGS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
 plot.gam(model4AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4AGS,residuals=T) 
-appraise(model4AGS) 
+appraise(model4AGS) #Deviance explained = 47.5%
 summary(model4AGS) # no  toma bien la autocorrelacion
 
 # ACF anidada en area 
@@ -263,8 +236,8 @@ draw(model4AGS,residuals=T)
 appraise(model4AGS) # no toma la autocorrelacion
 summary(model4AGS) 
 
-
-AIC(model6GS,model4GS,model6AGS,model4AGS)# el model4AGs es el mejor pero no toma la autocorrelacion
+# Modelos son y sin autocorelacion (A), no esta funcionando la ACF
+AIC(model6GS,model4GS,model6AGS,model4AGS)# mismo AIC con y sin ACF, no toma la autocorrelacion
 
 
 ## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
@@ -294,18 +267,21 @@ draw(model6AGI,residuals=T) # no lo grafica
 appraise(model6AGI) #R-sq.(adj) =  0.235   Deviance explained = 49.5%
 summary(model6AGI) # no toma la autocorrelacion 
 
+# Modelos Gs vs GI con y sin autocorrelacion (no toma la ACF)
+AIC(model6GS,model4GS,model6AGS,model4AGS,model6GI,model6AGI) # GI es mejor que GS pero por una unidad de AIC (3190 vs 3201)
 
-AIC(model6GS,model4GS,model6AGS,model4AGS,model6GI,model6AGI) # modelo 6GI es el mejor aunq no lo grafica
-
-## Areas (BBF, BBE, PP) para 1 organismo (M. edulis)####
+# MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 model6GIM<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(area, bs="re", k=12), data = DETOX2M,family=Gamma (link="log"), method="REML")
 plot.gam(model6GIM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6GIM,residuals=T) # tira error no grafica 
+draw(model6GIM,residuals=T) #  no grafica 
 appraise(model6GIM) 
 summary(model6GIM) #R-sq.(adj) =  0.191   Deviance explained = 43.1%
 
+# Modelos GI filtrados mejillon vs generales (sin filtrar) 
+AIC(model6GIM,model6GI)# mejor el modelo filtrado para Mejillon (BBE,PP,BBF)
 
+# CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 model6GIA<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(area, bs="re", k=12), data = DETOX2A, family=Gamma (link="log"), method="REML")
 plot.gam(model6GIA,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
@@ -313,7 +289,7 @@ draw(model6GIA,residuals=T) # no acepta el modelo
 appraise(model6GIA) 
 summary(model6GIA)
 
-## Organismos para 1 area (BBE) ####
+## BBE 2 Organismos para 1 area ------------------------------------#
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
 
 model6GIBBE<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(organism, bs="re", k=12), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
@@ -322,35 +298,29 @@ draw(model6GIBBE,residuals=T) # no lo grafica
 appraise(model6GIBBE) 
 summary(model6GIBBE) #R-sq.(adj) =  0.154   Deviance explained = 40.8%
 
-
-#Comparacion de modelos GI generales vs fitrados
+# Modelos GI para BBE generales vs fitrados
 AIC(model6GIBBE,model6GI)# mejor el modelo filtrado para area BBE
-AIC(model6GIM,model6GI)## mejor el modelo filtrado para Mejillon (BBE,PP,BBF)
 
+##RESUMEN DE MODELOS (AIC)
 #Comparacion de modelos GS generales vs fitrados
-AIC(model6GS,model4GS,model6GSM,model4GSM)# (<AIC) mejor el modelo filtrado para Mejillon (datos filtrados, area anidada by)pero 6GSM y 6GS le siguen por poco 
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # el 1ro sin filtrar (BBE) es el mejor 
+AIC(model6GS,model4GS,model6GSM,model4GSM)# (<AIC) mejor el modelo filtrado para Mejillon (datos filtrados, area anidada by)pero 6GSM le siguen por poco 
+AIC(model6GS,model4GS,model6GSA,model4GSA) # mejor modelo filtrado para cholga (model6GSA, model4GSA)
+AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # mejor modelo filtrado por area BBE (model4GSBBE, model6GSBBE)
 
 #comparacion de modelos para mejillon (GS/GI/filtrados)
-AIC(model6GIM,model6GI,model6GS,model4GS,model6GSM,model4GSM)# los mejores son los modelos filtrados Gs y GI (model4GSM, model6GIM)
-#para cholga no alcanzan los datos para hacer jerarquico
+AIC(model6GIM,model6GI,model6GS,model4GS,model6GSM,model4GSM) # mejores los modelos filtrados Gs y GI (model4GSM, model6GIM)
 
-##comparacion de modelos para BBE (GS/GI/filtrados)
-AIC(model6GIBBE,model6GI,model6GS,model4GS,model6GSBBE,model4GSBBE)# el mejor modelo es model6GS (sin filtrar)
+#comparacion de modelos para cholga (GS/GI/filtrados)
+AIC(model6GI,model6GS,model4GS,model6GSA,model4GSA) # mejores los modelos filtrados Gs (model4GSA, model6GSA)
 
-
-# k.check() es OK CUANDO
-# when EDF for all estimated smoothers are well below their maximum possible value #(k')
-# p-value for the observed k-index (which measures pattern in the residuals) is not significant
-
-#Total deviance BUSCAR LA MENOR
+#comparacion de modelos para BBE (GS/GI/filtrados)
+AIC(model6GIBBE,model6GI,model6GS,model4GS,model6GSBBE,model4GSBBE)#  mejores modeloS filtrados GI y GS (6GI, 6GS, 4GS)
 
 
-### --------MODELOS GS Y GI incluyendo estacionalidad ---------------------------------------- ###############
+## Modelos jerarquicos (incluyendo estacionalidad) -------------------------------------------------------------##
 
-####------- GS ----------------------------------------#####
+### GS (siguiendo ejemplo zooplancton)
 #zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
-
 
 str(DETOX2)
 DETOX2$year<-as.factor(DETOX2$year)## year-F tiene q ser factor
@@ -361,9 +331,10 @@ appraise(MGS)
 summary(MGS) #R-sq.(adj) =  0.367   Deviance explained = 59.4%
 k.check(MGS) ## edf< k y p value no sig p-value (measures remaining pattern in the residuals) .. esto es OK
 
-AIC(model6GS,model4GS,MGS) # el AIC es mas alto con respecto a los anteriores
 
-## Areas (BBF, BBE, PP) para 1 organismo (M. edulis)####
+AIC(model6GS,model4GS,MGS) # mejor modelo (<AIC) respecto de los anteriores generales (sin filtrar)
+
+# MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
@@ -372,10 +343,11 @@ appraise(MGSM)
 summary(MGSM) #R-sq.(adj) =  0.439   Deviance explained = 81.3%
 k.check(MGSM) # ok pero residuales no tan lindos en los extremos 
 
-AIC(model6GS,model4GS,MGS, MGSM) # MGSM es claramente mejor q todos los demas AIC (1909)
+AIC(model6GS,model4GS,model6GSM,model4GSM,MGS, MGSM) # MGSM es claramente mejor q todos los demas AIC (1909)
 
 # ver que hacer con el termino que da no significativo s(Days, area) !!!!!!!!!!
 
+# CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 
 MGSA <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
@@ -385,9 +357,9 @@ summary(MGSA) #R-sq.(adj) =  0.358   Deviance explained = 64.5% todo significati
 k.check(MGSA) #ok
 
 
-AIC(model6GS,model4GS,MGSA)# claramente el AIC baja cn datos filtrados para cholga y estacionalidad 
+AIC(model6GS,model4GS,model6GSA,model4GSA,MGSA)# claramente el AIC baja cn datos filtrados para cholga e inluyendo estacionalidad 
 
-## Organismos para 1 area (BBE) ####
+## BBE 2 Organismos para 1 area ------------------------------------#
 #zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
 
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
@@ -397,11 +369,9 @@ appraise(MGSBBE) # pas mal
 summary(MGSBBE) #R-sq.(adj) =   0.34   Deviance explained = 72.3% 
 k.check(MGSBBE)
 
-AIC(model6GS,model4GS,MGSBBE) # el M6GS sigue siendo el mejor 
+AIC(model6GS,model4GS,model6GSBBE,model4GSBBE,MGSBBE) # MGSBBE el mejor 
 
-
-
-###--------GI ----------------------------------#####
+### GS (siguiendo ejemplo zooplancton)
 #zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") + s(day, by=lake, k=10, bs="cc") + s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)), family=Gamma(link ="log"), method="REML", drop.unused.levels=FALSE)
 
 MGI <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
@@ -409,9 +379,9 @@ draw(MGI, residuals = TRUE)## no grafica
 plot.gam(MGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 appraise(MGI) # los residuales se ven muy bien
 summary(MGI)# R-sq.(adj) =  0.372   Deviance explained = 60.9% pero solo los dias significativos
-K.check(MGI) #ok
+k.check(MGI) #ok
 
-## Areas (BBF, BBE, PP) para 1 organismo (M. edulis)####
+# MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIM, residuals = TRUE) ## no grafica 
@@ -420,10 +390,13 @@ appraise(MGIM) # los residuales se ven bien
 summary(MGIM) #R-sq.(adj) =  0.441   Deviance explained = 81.2%
 k.check(MGIM) #ok
 
-AIC(model6GS,model4GS,MGS,MGI)# el model6GS sigue siendo el mejor  
+# GS vs GI (con y sin estacionalidad)
+AIC(model6GS,model4GS,MGS,MGI)# MGS, MGI (c/estacionalidad) son mejores 
 
-AIC(model6GS,model4GS,MGS,MGI, MGSM,MGIM)# MGIM es aun mejor que MGSM pero no por mucho
+# GS, GI generales vs filtrados para mejillon, c/ y s/estacionalidad
+AIC(model6GS,model4GS,MGS,MGI, MGSM,MGIM)# MGSM, MGIM (c/estacionalidad y filtrados para mejillon son mejores 
 
+# CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 MGIA <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIA, residuals = TRUE) ## no lo acepta
@@ -432,6 +405,7 @@ appraise(MGIA) #
 summary(MGIA) #
 k.check(MGIA)
 
+## BBE 2 Organismos para 1 area ------------------------------------#
 #zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") + s(day, by=lake, k=10, bs="cc") + s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)), family=Gamma(link ="log"), method="REML", drop.unused.levels=FALSE)
 
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
@@ -442,8 +416,8 @@ appraise(MGIBBE) # pas mal
 summary(MGIBBE) #R-sq.(adj) =  0.358   Deviance explained = 72.3% 
 k.check(MGIBBE)
 
-
-AIC(model6GS,model4GS,MGIBBE, MGSBBE) # model 6GS es el mejor 
+# modelos generales GS, GI vs filtrados
+AIC(model6GS,model4GS,MGIBBE, MGSBBE) # MGSBBE (filtrado cn estacionalidad) es el mejor 
 
 
 
