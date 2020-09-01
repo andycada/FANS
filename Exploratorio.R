@@ -1,23 +1,37 @@
 
 #------Exploratorio Datos Toxinas TPM ------------------------------------------------#
 
+## Analizo los datos incluyendo las 4 zonas menos muestreadas, N muy diferente para las 4 estaciones  ----------------------------------------------------------------
+# BBB: Bahia Brown Bajo
+# BBE: Bahia Brown Entrada
+# BBF: Bahia Brown Fondo
+# PP:  Punta Parana
 
 library(readxl)
 
-data <- read_excel("Data/totalRsinbajo.xlsx")
+data <- totalR
+data <- read_excel("Data/totalR.xlsx")
 names(data)
 str(data)
+data$Area
 
-data$STX <- data$STX + 0.001
+# data$STX <- data$STX + 0.001
 
-  
-# Area: BBE (Bahia Brown Entrada), BBF(B Broww Fondo), PP (Punta Parana)
+# Filtrar una sola especie (paquete tidyverse)
+# data <- data %>% filter(Organism == "M. edulis" )
 
 
-# graficos sin incluir  la zona menos muestreada (BBB) -------------------------#
+#Graficos exploratorios
 
 library(tidyverse)
 theme_set(theme_bw())
+
+library(showtext)
+font_add_google("Poppins", "Poppins")
+font_add_google("Roboto Mono", "Roboto Mono")
+showtext_auto()
+
+theme_set(theme_light(base_size = 18, base_family = "Poppins"))
 
 d_sorted <- data %>%
   mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
@@ -30,126 +44,68 @@ ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
   coord_flip() + xlab("") + geom_boxplot(color = "gray60", outlier.alpha = 0) +
   geom_jitter(size = 2, alpha = 0.25, width = 0.2)  + theme_bw()
 
-
-require(fitdistrplus)
-descdist(data$STX, boot=1000)
-
-
-# STX vs Area, Season 
-
-library(sciplot) 
-bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "?g STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
+# (Fig 1) Para manuscrito ( STX vs Area, datos totales)----------------------------------#
+theme_set(theme_light(base_size = 10, base_family = "Poppins"))
+ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 
 
-bargraph.CI(season,STX, data = data, ylim= c(0, 700), ylab = "?g STX eq/100 g tissue", xlab = "Season", col = "steelblue4")
+# Fig 2 Box plot (Manuscrito,  season STX, escala log, asterisco p resumir tukey)---------#
+# Escala log (mas medias)
+ggplot(d_sorted, aes(x=season,y=log(data$STX + 0.001),color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + labs(x = NULL , y = expression(PSP~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank()) 
+ggplot(d_sorted, aes(x=season,y=log(STX),color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank()) 
+
+# puntos (media y mediana)
+ggplot(d_sorted, aes(x=season,y=log(data$STX + 0.001),color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() + geom_hline(aes(yintercept = log(80)), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none")
+ggplot(d_sorted, aes(x=season,y=log(data$STX + 0.001),color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() + geom_hline(aes(yintercept = log(80)), color = "red", size = 0.6)+ stat_summary(fun = median, geom = "point", size = 5) + theme(legend.position = "none")
+
+# Sin escala log (medias)
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 80), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none")
+
+# puntos (media y mediana)
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() + geom_hline(aes(yintercept = 80), color = "red", size = 0.6) + stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none")
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() + geom_hline(aes(yintercept = 80), color = "red", size = 0.6) + stat_summary(fun = median, geom = "point", size = 5)+ theme(legend.position = "none")
+
+
+# los puntos mas grandes son las medianas o las medias
+# agregar linea sobre los 80 µg: geom_hline(aes(yintercept = world_avg), color = "gray70", size = 0.6)
+# Agregar mediana: stat_summary(fun = mean, geom = "point", size = 5)
+# geom_jitter(size = 2, alpha = 0.25, width = 0.2) para puntos en vez de cajas 
+
+
+#corroborar medias y medianas
+
+library(dplyr)
+group_by(data, season) %>%
+  summarise(
+    count = n(),
+    mean = mean(STX, na.rm = TRUE),
+    sd = sd(STX, na.rm = TRUE),
+    median = median(STX, na.rm = TRUE),
+    IQR = IQR(STX, na.rm = TRUE)
+  )
+
+
+ggplot(d_sorted, aes(x=Area,y=STX,color=Area)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
 
 
 
-# ANOVAS
-a1 <- aov(STX ~ Area, data = data, na.action=na.fail) 
-summary(a1) 
-TukeyHSD(a1,"Area") # dif sig en el area (BBE> PP> BBF)
 
-# analisis de residuales
-layout(matrix(c(1:6), 2, 3)) 
-plot(a1, 1:6) # no parece mejorar cn transformacion log 
-layout(1)
 
+
+
+
+
+# ANALISIS NO PARAMETRICOS ---------------------------------------------------------------------------##
+# ANOVAS no se cumple supuesto de normalidad asique se aplican test no parametricos 
 # Prueba de Kruskal-Wallis para dos o m?s muestras independientes
-#no-parametrica, no asume normalidad pero si homocedasticidad
+# no-parametrica, no asume normalidad pero si homocedasticidad
 
-# Filtrar una sola especie (paquete tidyverse)
-#
-data <- data %>% filter(Organism == "M. edulis" )
-
-ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
-
-k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
-k1 #p-value < 2.2e-16
-
-a2 <- aov(STX ~ season, data = data, na.action=na.fail) 
-summary(a2)
-TukeyHSD(a2,"season") # dif sig en la estacion  (summer> autumn> spring> winter)
-
-# analisis de residuales
-layout(matrix(c(1:6), 2, 3)) 
-plot(a2, 1:6) # no parece mejorar cn transformacion log
-layout(1)
-
-ggplot(d_sorted, aes(x=STX,color=season)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
-
-ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() 
-
-ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
-
-
-k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
-k2 #p-value < 2.2e-16
-
-
-library(sciplot)
-bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE)
-
-bargraph.CI(Area, STX, season, data = data,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
-
-
-a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
-summary(a3)
-
-TukeyHSD(a3,"Area:season")
-
-# analisis de residuales
-
-layout(matrix(c(1:6), 2, 3)) 
-plot(a3, 1:6) 
-layout(1) CAL ~ SEXE + HORM + SEXE:HORM
-
-k3<-kruskal.test(STX ~ Area : season, data = data, na.action=na.fail)
-k1 #p-value < 2.2e-16
-
-# STX vs organism 
-
-bargraph.CI(Organism, STX, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE)
-
-a4 <- aov(log(STX +1)  ~ Organism, data = data) 
-summary(a4) 
-
-# residuales 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a4, 1:6) # residuales horribles
-layout(1)
-
-t.test(STX ~ Organism, data = data, na.action=na.fail)# Welch Two Sample t-test, p-value = 0.01058 
-
-
-#-----------------------------------------------#
-
-## Analizo los datos incluyendo la zona menos muestreada (BBB), N muy diferente para las 4 estaciones  ----------------------------------------------------------------
-# BBB: Bahia Brown Bajo
-
-data <- read_excel("Data/totalR.xlsx")
-names(data)
-str(data)
-
-ggplot(data, aes(x = Date, y = STX,color=Area)) + xlab("") + geom_line() + facet_grid( Area ~ Organism,scale="free_y") 
-
-# STX vs Area 
-
-library(sciplot) 
-
-bargraph.CI(Area,STX, data = data, ylim= c(0, 200), ylab = "?g STX eq/100 g tissue", xlab = "Area")
-
-a1 <- aov(STX ~ Area, data = data, na.action=na.fail) 
-summary(a1)
-TukeyHSD(a1,"Area") # STX es sig diferente en cada area de muestreo (BBE>PP>BBF>BBB)
-
-# residuales
-layout(matrix(c(1:6), 2, 3))  
-plot(a1, 1:6) 
-layout(1)
+# STX vs Area -------------------------------------------------------------#
 
 STX<- data$STX
 Area<-data$Area
+data$season<-as.factor(data$season)
 
 #Normalidad
 shapiro.test(STX) #p-value < 2.2e-16
@@ -162,25 +118,33 @@ bartlett.test(STX ~ Area, data = data, na.action=na.fail) #p-value < 2.2e-16
 fligner.test(STX ~ Area, data = data, na.action=na.fail)
 
 k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
-k1 #p-value < 2.2e-16
+k1 #p-value < 2.2e-16 # STX es sig diferente en cada area de muestreo (BBE>PP>BBF>BBB)
+ 
+# Comparaciones multiples no parametrico
+install.packages("PMCMRplus") 
+
+pairwise.wilcox.test(data$STX,data$Area,p.adj="bonferroni") # todas areas sig difernetes excepto BBF y BBB, BBF y PP
+
+install.packages("dunn.test")
+library(dunn.test)
+install.packages("FSA")
+library(FSA)
+dunnTest(data$STX, data$Area, method="bonferroni") # todas las areas son sifg diferentes entre ellas 
+# estos dos test me dan resultados diferents
 
 
-
-
-# STX vs Season
-
-bargraph.CI(season,STX, data = data, ylim= c(0, 400), ylab = "?g STX eq/100 g tissue", xlab = "Season")
-
-a2 <- aov(log(STX + 1) ~ season, data = data, na.action=na.fail) 
-summary(a2)
-TukeyHSD(a2,"season") # STX es sig diferente en cada estacion del anio (summer> autumn> spring> winter)
-
-
-#residuales
-layout(matrix(c(1:6), 2, 3)) 
-plot(a2, 1:6) 
-layout(1)
-
+STX <- data$STX + 0.001
+library(dplyr)
+ group_by(data, Area) %>%
+  summarise(
+      count = n(),
+           mean = mean(STX, na.rm = TRUE),
+        sd = sd(STX, na.rm = TRUE),
+         median = median(STX, na.rm = TRUE),
+         IQR = IQR(STX, na.rm = TRUE)
+       )
+ 
+# STX vs Season-------------------------------------------------------------------#
 
 # homogeneidad de varianzas 
 bartlett.test(STX ~ season, data = data, na.action=na.fail) #p-value < 2.2e-16
@@ -190,215 +154,336 @@ fligner.test(STX ~ season, data = data, na.action=na.fail)
 
 
 k2<-kruskal.test(STX ~ season, data = data, na.action=na.fail)
-k2 #p-value < 2.2e-16
+k2 #p-value < 2.2e-16 # STX es sig diferente en cada estacion del anio (summer> autumn> spring> winter)
 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a2, 1:6) 
-layout(1)
+# wilcox.test (anova NP dos muestras) Performs one- and two-sample Wilcoxon tests on vectors of data; the latter is also known as 'Mann-Whitney' test
+
+# Comparaciones multiples non parametrico
+
+pairwise.wilcox.test(data$STX,data$season,p.adj="bonferroni") # primero y luego x
+# Calculate pairwise comparisons between group levels with corrections for multiple testing
+
+dunnTest(data$STX, data$season, method="bonferroni") # todas las season son sifg diferentes entre ellas 
+
+STX <- data$STX + 0.001
+library(dplyr)
+group_by(data, season) %>%
+  summarise(
+    count = n(),
+    mean = mean(STX, na.rm = TRUE),
+    sd = sd(STX, na.rm = TRUE),
+    median = median(STX, na.rm = TRUE),
+    IQR = IQR(STX, na.rm = TRUE)
+  )
 
 
-
-
-# anova factorial a dos factores cruzados (area y season)
+# anova factorial a dos factores cruzados (area y season) ------------------------#
 
 library(sciplot)
-bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", col = c("steelblue1", "steelblue4"), legend = TRUE)
-
-bargraph.CI(Area, STX, season, data = data, ylim =c(0,800), xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=850, ncol=1)
 
 
-a3 <- aov(log(STX + 1) ~ Area*season, data = data) 
-summary(a3)
+#Fig 3
+#bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", col = c("steelblue1", "steelblue4"), legend = TRUE)
 
-TukeyHSD(a3,"Area:season")
+layout(matrix(c(1:2), 2, 1))# graficar primero b y luego a
 
-# residuales
-layout(matrix(c(1:6), 2, 3)) 
-plot(a3, 1:6) 
+a<-bargraph.CI(Area, STX, season, data = data, ylim =c(0,900), xlab = NA, ylab = "µg STXeq/100 gtissue", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
+
+#Fig 3b (frecuencia de vedas)
+library(readxl)
+frecuencia_de_vedas <- read_excel("GitHub/FANS/Data/frecuencia de vedas.xlsx")
+
+b<-bargraph.CI(Area, outbrakes, season, data = frecuencia_de_vedas, ylim =c(0,70), xlab = "Area", ylab = "Outbrakes (%)", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = F, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=100,  cex.lab = 1,cex.names = 1)
+
 layout(1)
 
+# PARA COMPARAR CON INFOSTAT KRUSKAL WALLIS STX VS SEASON (PARTICIONADO, FILTRADO SEGUN AREA)
 
-k3<-kruskal.test(STX ~ Area*season, data = data, na.action=na.fail)
-k3 #p-value < 2.2e-16
+BBE <- data %>% filter(Area == "BBE" )
+
+kruskal.test(STX ~ season, data = BBE, na.action=na.fail)# p-value = 7.916e-14
+pairwise.wilcox.test(BBE$STX,BBE$season,p.adj="bonferroni") #TODAS SIG  DIFERENTES menos spring winter
+dunnTest(BBE$STX, BBE$season, method="bonferroni")# todas sig (sim infostat)
+
+BBF <- data %>% filter(Area == "BBF" )
+
+kruskal.test(STX ~ season, data = BBF, na.action=na.fail)#p-value = 3.991e-06
+pairwise.wilcox.test(BBF$STX,BBF$season,p.adj="bonferroni")# todas sig menos spring winter, autumn summer y spring autun (sim Infostat)
+dunnTest(BBF$STX, BBF$season, method="bonferroni")# todas sig menos autumn summer
+
+BBB <- data %>% filter(Area == "BBB" )
+
+kruskal.test(STX ~ season, data = BBB, na.action=na.fail)#p-value = 1.327e-05
+pairwise.wilcox.test(BBB$STX,BBB$season,p.adj="bonferroni") ## todas sig menos autumn summer spring winter spring summer(sim Infostat)
+dunnTest(BBB$STX, BBB$season, method="bonferroni")# todas sig menos autumn summer y spring winter 
+
+PP <- data %>% filter(Area == "PP" )
+
+kruskal.test(STX ~ season, data = PP, na.action=na.fail)#p-value = 1.778e-07
+pairwise.wilcox.test(PP$STX,PP$season,p.adj="bonferroni")# todas sig menos spring autumn, autumn summer
+dunnTest(PP$STX, PP$season, method="bonferroni")# todas sig menos spring autumn (sim a Infostat)
 
 
-# STX vs organism ---------------------
 
-bargraph.CI(Organism,STX, data = data, ylab = "?g STX eq/100 g tissue", xlab = "Organism")
+# STX vs organism ------------------------------------------------------------------#
 
-a4 <- aov(STX ~ Organism, data = data) 
-summary(a4) #  no dif sig en la toxicidad en relacion al organismo, dats muy heterogneos
+# (Fig 3) grafico de barras organismo 
+bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = NA, space=0.4,cex.lab = 1.5, x.leg = 1.5,cex.names = 1.5, col = c("red1", "green3"))
 
-# residuales 
-layout(matrix(c(1:6), 2, 3)) #residuales horribles incluso cn transformacion
-plot(a4, 1:6) 
-layout(1)
+#cex.lab tamanio de la letra
 
-t.test(STX ~ Organism, data = data, na.action=na.fail)# p-value = 0.1607
+# Prueba de Wilcoxon Man Whitney U test (No P alternativo a prueba t para dos muestras independ)
+organism <- read_excel("Data/organism.xlsx")
+str(organism)
 
-bargraph.CI(season, STX, Organism, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0.5, y.leg=500, ncol=1)
+wilcox.test(STX ~ Organism, data = data, exact = FALSE)#p-value = 5.375e-06. 
+#We can conclude that a ater's median weight is significantly different from m edulis's median weight with a p-value<0.05.
 
-bargraph.CI(Area, STX, Organismo, data = data,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")#p-value = 2.687e-06
+# A ater> Medulis (hip alternativa comprobada)
+
+# (Fig 6) grafico de barras organismo para cd area 
+bargraph.CI(Area,STX,Organism, data = data, ylab = "µg STX eq/100 g tissue", xlab = NA, cex.lab = 1.4,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
+
+# (Fig x) alternativa grafico de barras organismo por season  
+bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = "µg STX eq/100 g tissue", cex.lab = 1.4,cex.names = 1.25,col = c("red1", "green3"),legend = TRUE, x.leg=9, y.leg=500, ncol=1)
+
+
 
 
 ## solo datos de Mejillones 
 
-M <- read_excel("Data/mejillonR.xlsx")
-str(M)
+M <- data %>% filter(Organism == "M. edulis" )
 
-bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- M %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a6 <- aov(STX ~ Area, data = M) # niveles de STX son sifnificativamente diferentes enlas 3 zonas q tienen mejillon 
-summary(a6)
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
 
-TukeyHSD(a6,"Area") #dif sig en los mejillones (BBE> PP> BBF)
+ggplot(d_sorted, aes(x=Area,y=STX,color=Area)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a6, 1:6) 
-layout(1)
+#Histograma
+ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
+
+# Barras (mean)
+bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+
 
 k6<-kruskal.test(STX ~ Area, data = M, na.action=na.fail)
-k6 # p-value = 2.721e-08
+k6 # p-value = 2.721e-08 
+# niveles de STX son sifnificativamente diferentes enlas 3 zonas q tienen mejillon 
+
+
+pairwise.wilcox.test(M$STX,M$Area,p.adj="bonferroni") # BBF no es sig diferente de PP
+dunnTest(M$STX,M$Area, method="bonferroni") # todas sig diferente
+
 
 
 #solo datos de cholga 
 
-C <- read_excel("Data/cholgaR.xlsx")
-str(C)
+C <- data %>% filter(Organism == "A. ater" )
 
+d_sorted <- C %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
+
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+
+ggplot(d_sorted, aes(x=Area,y=STX,color=Area)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+
+#Histograma
+ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
+
+# Barras
 bargraph.CI(Area, STX, data = C,  xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
-a7 <- aov(STX ~ Area, data = C) # niveles de STX son sig diferentes en las 2 zonas q tienen cholga (BBE> BBB)
-summary(a7)
-
-layout(matrix(c(1:6), 2, 3)) 
-plot(a7, 1:6) 
-layout(1)
 
 k7<-kruskal.test(STX ~ Area, data = C, na.action=na.fail)
-k7 # p-value = 1.761e-12
+k7 # p-value = 1.761e-12  #niveles de STX son sig diferentes en las 2 zonas q tienen cholga (BBE> BBB)
+
 
 
 # solo datos de BBE para comparar cholga vs mejillon 
 
-BBE <- read_excel("Data/BBE-R.xlsx")
-str(BBE)
+BBE <- data %>% filter(Area == "BBE" )
 
-bargraph.CI(organism, STX, data = BBE,  xlab = "Organism", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- BBE %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a8 <- aov(STX ~ organism, data = BBE) 
-summary(a8) # no hay dif en los valores de STX en el producto en la BBE
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a8, 1:6) 
-layout(1)
+#Histograma
+ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
 
-t.test(STX ~ organism, data = BBE, na.action=na.fail)# p-value = 0.9054
 
-## analisis de STX vs organimsmo por season (x separado)---------------#
+# Barras
+bargraph.CI(Organism, STX, data = BBE,  xlab = "Organism", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+
+wilcox.test(STX ~ Organism, data = BBE, exact = FALSE)#p-value = 0.001952
+#We can conclude that a ater's median weight is significantly different from m edulis's median weight with a p-value<0.05.
+
+wilcox.test(STX ~ Organism, data = BBE, exact = FALSE, alternative = "greater")#p-value = 0.0009761
+# A ater> Medulis (hip alternativa comprobada)
+
+
+library(readxl)
+BBE <- read_excel("Data/BBE-organism.xlsx")
+
+wilcox.test(BBE$A.ater,BBE$M.edulis)#p-value = 5.375e-06
+
+## analisis de STX vs organimsmo por season (x separado)---------------------------------------------#
 
 # winter
-W <- read_excel("Data/winterR.xlsx")
+W <- data %>% filter(season == "winter" )
 str(W)
 
-bargraph.CI(organism, STX, data = W, xlab = "Winter", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- W %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a0 <- aov(STX ~ organism, data = W) #  significativos
-summary(a0)
-
-a0 <- aov(log (STX + 1) ~ organism, data = W) #  significativos
-summary(a0)
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+ggplot(d_sorted, aes(x=Organism,y=log(STX),color=Organism)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = log(80)), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none") 
 
 
-layout(matrix(c(1:6), 2, 3)) # residuales horrible, no normalidad
-plot(a0, 1:6) 
-layout(1)
+bargraph.CI(Organism, STX, data = W, xlab = "Winter", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
-t.test(STX ~ organism, data = W, na.action=na.fail)# p-value = 0.01044
+
+kruskal.test(STX ~ Organism, data = W, na.action=na.fail)#p-value = 0.008421
+
 
 
 # autumn
-A <- read_excel("Data/autumnR.xlsx")
+A <- data %>% filter(season == "autumn" )
 str(A)
 
-bargraph.CI(organism, STX, data = A, xlab = "Autumn", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- A %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a1 <- aov(log(STX + 1) ~ organism, data = A) #  significativos
-summary(a1)
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+ggplot(d_sorted, aes(x=Organism,y=log(STX),color=Organism)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = log(80)), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none", title(main="Autumn")) 
 
-a1 <- aov(STX ~ organism, data = A) #  significativos
-summary(a1)
 
-layout(matrix(c(1:6), 2, 3)) # residuales horribles
-plot(a1, 1:6) 
-layout(1)
-  
-t.test(STX ~ organism, data = A, na.action=na.fail)# p-value = 0.01064
+bargraph.CI(Organism, STX, data = A, xlab = "Autumn", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+
+kruskal.test(STX ~ Organism, data = A, na.action=na.fail)#p-value = p-value = 0.000414
+#los niveles de STX en las dos especies son significativamente diferentes durante el otonio
+#As the p-value is less than the significance level 0.05, we can conclude that there are significant differences between the treatment groups
 
 
 # summer
 
-S <- read_excel("Data/summerR.xlsx")
+S <- data %>% filter(season == "summer" )
 str(S)
 
-bargraph.CI(organism, STX, data = S, xlab = "Summer", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- S %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a2 <- aov(STX  ~ organism, data = S) # no significativo
-summary(a2)
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
+ggplot(d_sorted, aes(x=Organism,y=log(STX),color=Organism)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = log(80)), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none")
 
-a2 <- aov(log(STX + 1)  ~ organism, data = S) # no significativo
-summary(a2)
 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a2, 1:6) 
-layout(1)
+bargraph.CI(Organism, STX, data = S, xlab = "Summer", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
-t.test(STX ~ organism, data = S, na.action=na.fail)# p-value = 0.25
+kruskal.test(STX ~ Organism, data = S, na.action=na.fail)#p-value = 0.01953
+#los niveles de STX  son significativamente diferentes durante el verano
+
 
 # spring
 
-SP <- read_excel("Data/springR.xlsx")
+SP <- data %>% filter(season == "spring" )
 str(SP)
 
-bargraph.CI(organism, STX, data = SP, xlab = "Spring", ylab = "?g STX eq/100 g tissue", legend = TRUE)
+d_sorted <- SP %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-a3 <- aov(STX ~ organism, data = SP) # no significativo
-summary(a3)
-
-a3 <- aov(log(STX +1) ~ organism, data = SP) # no significativo
-summary(a3)
-
-layout(matrix(c(1:6), 2, 3)) 
-plot(a3, 1:6) 
-layout(1)
+ggplot(d_sorted, aes(x=Organism,y=STX,color=Organism))+ xlab("") + geom_jitter() + scale_color_viridis_d() + theme(legend.position = "none")
+ggplot(d_sorted, aes(x=Organism,y=log(STX),color=Organism)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none")
 
 
-t.test(STX ~ organism, data = SP, na.action=na.fail)# p-value = 0.058
+bargraph.CI(Organism, STX, data = SP, xlab = "Spring", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
-# dif entre medias anuales ---------------------------------#
-bargraph.CI(Year, STX, data = data,  xlab = "Year", ylab = "?g STX eq/100 g tissue", legend = TRUE)
-
-a6 <- aov(STX  ~ Year, data = data) #  significativos
-summary(a6)
-
-TukeyHSD(a6,"Year")
-
-layout(matrix(c(1:6), 2, 3)) 
-plot(a6, 1:6) 
-layout(1)
+kruskal.test(STX ~ Organism, data = SP, na.action=na.fail)#p-value = 0.1874
+#los niveles de STX no son significativamente diferentes durante el verano
 
 
-# dif entre medias anuales por area
-bargraph.CI(Year, STX, Area, data = data,  xlab = "Year", ylab = "?g STX eq/100 g tissue", legend = TRUE, x.leg=0, y.leg=700)
+ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + scale_color_viridis_d() ### Agregar mediana
 
-a7 <- aov(STX ~ Year*Area, data = data) # los 3 significativos
-summary(a7)
 
-TukeyHSD(a7,"Year:Area")
 
-layout(matrix(c(1:6), 2, 3)) 
-plot(a7, 1:6) 
-layout(1)
+#ubicar los 4 boxplot de season juntos 
+#layout(matrix(c(1:6), 2, 3)) 
+#layout(1)
+#layout(matrix(c(1:2), 1, 2)) 
+#layout(matrix(c(1:6), 2, 3)) 
+#plot(a3, 1:6) 
+#layout(1)
+
+# Dif entre medias/medianas anuales -------------------------------------------------------------# 
+
+k8<-kruskal.test(STX ~ Year, data = data, na.action=na.fail)
+k8 #p-value < 2.2e-16 ,los niveles de STX  son significativamente diferentes segun el anio
+
+pairwise.wilcox.test(data$STX,data$Year,p.adj="bonferroni") # 
+dunnTest(data$STX,data$Year, method="bonferroni") # 
+
+# Box plot (Manuscrito)
+
+d_sorted <- data %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
+
+
+ggplot(d_sorted, aes(x=Year,y=STX,color=Year)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 80), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 3)+ theme(legend.position = "none",panel.grid = element_blank()) 
+ggplot(d_sorted, aes(x=Year,y=STX,color=Year)) + xlab("") + geom_jitter() + scale_color_viridis_d() + geom_hline(aes(yintercept = 80), color = "red", size = 0.6)+ stat_summary(fun = median, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank())  
+
+
+#escala log
+ggplot(d_sorted, aes(x=Year,y=log(STX),color=Year)) + xlab("Year") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 3)+ theme(legend.position = "none", panel.grid = element_blank())  
+ggplot(d_sorted, aes(x=Year,y=log(data$STX + 0.001),color=Year)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 3)+ theme(legend.position = "none", panel.grid = element_blank())  
+
+
+# Ver de hacer test de freeman (no parametrico a dos vias, parece q es solo para medidas repetidas) con year y area a ver si da diferente 
+
+
+
+
+# PARA TABLA GENERAL DE MANUSCRITO por anos toxicos y menso toxicos 
+# Compute summary statistics by groups:
+
+STX <- data$STX + 0.001
+
+  library(dplyr)
+group_by(data, Year) %>%
+  summarise(
+    count = n(),
+    mean = mean(STX, na.rm = TRUE),
+    sd = sd(STX, na.rm = TRUE),
+    median = median(STX, na.rm = TRUE),
+    IQR = IQR(STX, na.rm = TRUE)
+  )
+
+group_by(data, season) %>%
+  summarise(
+    count = n(),
+    mean = mean(STX, na.rm = TRUE),
+    sd = sd(STX, na.rm = TRUE),
+    median = median(STX, na.rm = TRUE),
+    IQR = IQR(STX, na.rm = TRUE)
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -408,6 +493,9 @@ layout(1)
 # Duration: duracion de la veda, T desde q el mejillon supera los 80 ?g STX/100 g tejido, hasta que tiene valores por debajo de ese umbral
 
 library(readxl)
+
+eventos_toxicos_y_duracion <- read_excel("GitHub/FANS/Data/eventos toxicos y duracion.xlsx")
+data2 <- eventos_toxicos_y_duracion
 data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 names(data2)
 
@@ -428,15 +516,22 @@ summary(a9) # dif sig en la duracion del evento toxico segun la season
 
 TukeyHSD(a9,"Season") # summer - autumn mismo grupo y diferente de spring - winter
 
-
 layout(matrix(c(1:6), 2, 3)) 
 plot(a9, 1:6) # residuales parecen mejorar cn el log
 layout(1)
+
+k9<-kruskal.test(Duration ~ Season, data = data2, na.action=na.fail)#p-value = 0.001408
+
+pairwise.wilcox.test(data2$Duration,data2$Season,p.adj="bonferroni")# los unicos diferentes son autun de spring,spring summer.
+
+dunnTest(data2$Duration,data2$Season,method="bonferroni") # todas las season son sifg diferentes entre ellas 
 
 bargraph.CI(Duration,STXmax,Area, data = data2, ylab = "?g STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=600)
 
 a10 <- aov(log(Duration) ~ Area, data = data2, na.action=na.fail) 
 summary(a10) # no dif sig en la duracion del evento toxico segun el area 
+
+k10<-kruskal.test(Duration ~ Area, data = data2, na.action=na.fail) # p-value = 0.6095 no dif sig en la duracion del evento toxico segun el area
 
 layout(matrix(c(1:6), 2, 3)) 
 plot(a10, 1:6) # residuales parecen mejorar cn el log
@@ -449,18 +544,23 @@ layout(matrix(c(1:6), 2, 3))
 plot(a11, 1:6) # horribles los residuales 
 layout(1)
 
+k12<-kruskal.test(Duration ~ Organism, data = data2, na.action=na.fail) # p-value = 0.2295 no dif sig en la duracion del evento toxico segun el organism
+
 
 # solo BBE (para ver si hay diferencias entre cholga y mejillon en esa area de cultivo q presenta las 2 especies juntas)
 
-library(readxl)
-BBE2 <- read_excel("Data/eventos toxicos y duracion solo BBE.xlsx")
+BBE <- data2 %>% filter(Area == "BBE" )
+str(BBE)
 
-a11 <- aov(log(Duration) ~ Organism, data = BBE2, na.action=na.fail) 
+
+a11 <- aov(log(Duration) ~ Organism, data = BBE, na.action=na.fail) 
 summary(a11) # No dif sig en el tiempo de detoxificacion para cholgas y mejillones en BBE 
 
 layout(matrix(c(1:6), 2, 3)) # residuales feos
 plot(a11, 1:6) 
 layout(1)
+
+k11<-kruskal.test(Duration ~ Organism, data = BBE, na.action=na.fail) #p-value = 0.412 No dif sig
 
 # MODELOS LINEALES GENERALIZADOS 
 
