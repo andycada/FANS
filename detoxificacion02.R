@@ -7,10 +7,17 @@
 #Total deviance BUSCAR LA MENOR
 
 library(readxl)
+DETOX2 <-DETOX_filtrado
 DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 
 names(DETOX2)
 str(DETOX2)
+DETOX2$area<-as.factor(DETOX2$area)
+DETOX2$organism<-as.factor(DETOX2$organism)
+DETOX2$year<-as.factor(DETOX2$year)## year-F tiene q ser factor para modelo estacional
+
+library(mgcv)
+require(gratia)
 
 #Graficos 
 
@@ -19,15 +26,9 @@ theme_set(theme_bw())
 
 ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area ~ organism,scale="free_y") + geom_line() + geom_smooth(se=FALSE) 
 
-library(mgcv)
-require(gratia)
 
 #---------------------------------------------
 # pruebo area y organism como variables categoricas
-
-DETOX2$area<-as.factor(DETOX2$area)
-DETOX2$organism<-as.factor(DETOX2$organism)
-str(DETOX2)
 
 model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma (link="log"), method = "REML") 
 plot.gam(model2,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
@@ -317,7 +318,7 @@ AIC(model6GI,model6GS,model4GS,model6GSA,model4GSA) # mejores los modelos filtra
 AIC(model6GIBBE,model6GI,model6GS,model4GS,model6GSBBE,model4GSBBE)#  mejores modeloS filtrados GI y GS (6GI, 6GS, 4GS)
 
 
-## Modelos jerarquicos (incluyendo estacionalidad) -------------------------------------------------------------##
+## Modelos jerarquicos (incluyendo ESTACIONALIDAD) -------------------------------------------------------------##
 
 ### GS (siguiendo ejemplo zooplancton)
 #zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
@@ -371,7 +372,7 @@ k.check(MGSBBE)
 
 AIC(model6GS,model4GS,model6GSBBE,model4GSBBE,MGSBBE) # MGSBBE el mejor 
 
-### GS (siguiendo ejemplo zooplancton)
+### GI (siguiendo ejemplo zooplancton)
 #zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") + s(day, by=lake, k=10, bs="cc") + s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)), family=Gamma(link ="log"), method="REML", drop.unused.levels=FALSE)
 
 MGI <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
@@ -418,6 +419,150 @@ k.check(MGIBBE)
 
 # modelos generales GS, GI vs filtrados
 AIC(model6GS,model4GS,MGIBBE, MGSBBE) # MGSBBE (filtrado cn estacionalidad) es el mejor 
+
+
+### PRUEBA DATA TRAIN, DATA TEST, FUNCION PREDICT -----------------------------------#
+DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
+
+
+STX_train <- subset(DETOX2M, codigo%%2==1) #selecciono curvas impares para correr modelo, incluye todas las areas (BBE, PP, BBF)
+STX_test  <- subset(DETOX2M, codigo%%2==0) # pares para testear (BBE, BBE, no incluye PP porque no hay otra curva para esa area)
+
+view(STX_train)
+view(STX_test)
+
+
+# G con curvas impares (BBE, BBF, PP)
+
+#zoo_daph_modG <- gam(density_adj ~ s(day, bs="cc", k=10) + s(lake, bs="re") + s(lake, year_f, bs="re"),data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML",drop.unused.levels=FALSE)
+
+MGM_train <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs"re") + s(area, year, bs="re"),na.action = na.omit,data = STX_train, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGM_train, residuals = TRUE)
+appraise(MGM_train)
+summary(MGM_train) #ERROR
+k.check(MGM_train)
+
+
+
+# GS con curvas impares (BBE, BBF, PP)
+MGSM_train <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = STX_train, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGSM_train, residuals = TRUE)
+appraise(MGSM_train)
+summary(MGSM_train) #R-sq.(adj) =  0.555   Deviance explained = 74.7%
+k.check(MGSM_train) # Dasy, area no es significativo ver si se puede sacar
+
+# GI con curvas impares (BBE, BBF, PP)
+MGIM_train <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = STX_train, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGIM_train, residuals = TRUE) ## no grafica 
+plot.gam(MGIM_train,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+appraise(MGIM_train) 
+summary(MGIM_train)
+k.check(MGIM_train) #ERROR 
+
+
+#Checking residuals and qqplots for GAM fits
+
+#qqplot, using gratia's qq_plot function, with simulated confidence intervals
+pltG <- qq_plot(MGM_train, method = "simulate")+
+  labs(subtitle = NULL, title=NULL)
+pltGS <- qq_plot(MGSM_train, method = "simulate")+
+  labs(subtitle = NULL, title=NULL, y=NULL)
+pltGI <- qq_plot(MGIM_train, method = "simulate")+
+  labs(subtitle = NULL, title=NULL, y=NULL)
+
+plot_grid(pltG, pltGS,pltGI, 
+          ncol = 3, 
+          align = "hv", 
+          axis = "lrtb",labels=c("a","b","c"))
+
+
+plot(pltGS)
+
+#Create synthetic data to use to compare predictions (del data train creo un subset para usar predict)
+STX_plot_data <- expand.grid(Days = 1:259, 
+                              area = factor(levels(STX_train$area)),
+                              year = 2009)
+#VER ESTO ESTA MAL PLANTEADO!!!!!
+
+#extract predicted values and standard errors for both models. the 
+#exclude ="s(lake,year_f)" term indicates that predictions should be made 
+#excluding the effect of the lake-by-year random effect (effectively making
+#predictions averaging over year-lake  effects).
+
+STX_modG_fit <- predict(MGM_train, 
+                         newdata = STX_plot_data, 
+                         se.fit = TRUE, 
+                         exclude = "s(area,year)")
+STX_modGS_fit <- predict(MGSM_train, 
+                          newdata = STX_plot_data, 
+                          se.fit = TRUE, 
+                          exclude = "s(area,year)")
+STX_modGI_fit <- predict(MGIM_train, 
+                          newdata = daph_plot_data, 
+                          se.fit = TRUE, 
+                          exclude = "s(area,year)")
+
+
+STX_plot_data$modG_fit <- as.numeric(STX_modG_fit$fit)
+STX_plot_data$modGS_fit <- as.numeric(STX_modGS_fit$fit)
+STX_plot_data$modGI_fit <- as.numeric(STX_modGI_fit$fit)
+
+STX_plot_data <- gather(STX_plot_data, 
+                         key = model, 
+                         value = fit, 
+                         modGS_fit)
+
+STX_plot_data <- mutate(STX_plot_data, 
+                        se = c(as.numeric(STX_modGS_fit$se.fit),
+                        upper = exp(fit + (2 * se)),
+                        lower = exp(fit - (2 * se)))
+                        
+                         
+                                    
+STX_plot_model_labels = paste("Model", c("G","GS","GI"))
+STX_plot_model_labels = factor(STX_plot_model_labels, 
+                                levels= STX_plot_model_labels)
+
+STX_plot <- ggplot(STX_plot_data, aes(x=Days))+
+  facet_wrap(~area, nrow = 3)+
+  geom_point(data= STX_train, aes(x = Days, y = STX), size=0.06)+
+  geom_point(data= STX_test, aes(x = Days, y = STX),size=0.06,col="grey")+
+  geom_line(aes(x = Days, y = fit, colour = model))
+ 
+
+STX_plot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
