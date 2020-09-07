@@ -187,11 +187,11 @@ library(sciplot)
 
 layout(matrix(c(1:2), 2, 1))# graficar primero b y luego a
 
-a<-bargraph.CI(Area, STX, season, data = data, ylim =c(0,900), xlab = NA, ylab = "µg STXeq/100 gtissue", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
+a<-bargraph.CI(Area, STX, season, data = data, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
 
 #Fig 3b (frecuencia de vedas)
 library(readxl)
-frecuencia_de_vedas <- read_excel("GitHub/FANS/Data/frecuencia de vedas.xlsx")
+frecuencia_de_vedas <- read_excel("Data/frecuencia de vedas.xlsx")
 
 b<-bargraph.CI(Area, outbrakes, season, data = frecuencia_de_vedas, ylim =c(0,70), xlab = "Area", ylab = "Outbrakes (%)", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = F, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=100,  cex.lab = 1,cex.names = 1)
 
@@ -228,7 +228,7 @@ dunnTest(PP$STX, PP$season, method="bonferroni")# todas sig menos spring autumn 
 # STX vs organism ------------------------------------------------------------------#
 
 # (Fig 3) grafico de barras organismo 
-bargraph.CI(Organism,STX, data = data, ylab = "µg STX eq/100 g tissue", xlab = NA, space=0.4,cex.lab = 1.5, x.leg = 1.5,cex.names = 1.5, col = c("red1", "green3"))
+bargraph.CI(Organism,STX, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, space=0.5,cex.lab = 1.1, x.leg = 1.3,cex.names = 1.3, col = c("red1", "green3"))
 
 #cex.lab tamanio de la letra
 
@@ -243,10 +243,10 @@ wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")
 # A ater> Medulis (hip alternativa comprobada)
 
 # (Fig 6) grafico de barras organismo para cd area 
-bargraph.CI(Area,STX,Organism, data = data, ylab = "µg STX eq/100 g tissue", xlab = NA, cex.lab = 1.4,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
+bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
 
 # (Fig x) alternativa grafico de barras organismo por season  
-bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = "µg STX eq/100 g tissue", cex.lab = 1.4,cex.names = 1.25,col = c("red1", "green3"),legend = TRUE, x.leg=9, y.leg=500, ncol=1)
+bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"),legend = TRUE, x.leg=10, y.leg=500, ncol=1)
 
 
 
@@ -494,7 +494,7 @@ group_by(data, season) %>%
 
 library(readxl)
 
-eventos_toxicos_y_duracion <- read_excel("GitHub/FANS/Data/eventos toxicos y duracion.xlsx")
+eventos_toxicos_y_duracion <- read_excel("Data/eventos toxicos y duracion.xlsx")
 data2 <- eventos_toxicos_y_duracion
 data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 names(data2)
@@ -524,7 +524,7 @@ k9<-kruskal.test(Duration ~ Season, data = data2, na.action=na.fail)#p-value = 0
 
 pairwise.wilcox.test(data2$Duration,data2$Season,p.adj="bonferroni")# los unicos diferentes son autun de spring,spring summer.
 
-dunnTest(data2$Duration,data2$Season,method="bonferroni") # todas las season son sifg diferentes entre ellas 
+dunnTest(data2$Duration,data2$Season,method="bonferroni") # los unios diferentes summer, spring y summer winter 
 
 bargraph.CI(Duration,STXmax,Area, data = data2, ylab = "?g STX eq/100 g tissue", xlab = "Days", legend=T, x.leg=0, y.leg=600)
 
