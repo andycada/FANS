@@ -30,7 +30,7 @@ ggplot(DETOX2, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area 
 #---------------------------------------------
 # pruebo area y organism como variables categoricas
 
-model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma (link="log"), method = "REML") 
+model2 <- gam(STX ~ s(Days,  by = area), data = DETOX2,family=Gamma(link="log"), method = "REML") 
 plot.gam(model2,xlab= "Detoxification days",residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 summary(model2)  #R-sq.(adj) =  0.221   Deviance explained = 44.7
 draw(model2,residuals=T) #dibuja el GAMs y los puntos son los residuales
@@ -115,14 +115,14 @@ AIC(model4,model6, model4A, model6A) #los modelos sin AC (AR-1) son mejores
 # M1AGS <- gam(Medulis$STX ~ s(Date, k=5, m=2) + s(Date, Area,k=5, m=2,bs="fs"), na.action = na.omit,data = Medulis,family=Gamma (link="log"), method="REML")
 
 
-model6GS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+model6GS<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs") + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model6GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GS,residuals=T) 
 appraise(model6GS) 
 summary(model6GS) #R-sq.(adj) =  0.153   Deviance explained =   44%
 
 
-model4GS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
+model4GS <- gam(STX ~ s(Days, k=10, m=2) + s(Days,by = area, k=10, m=1,bs="fs") + s(Days, by=organism,m=1, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model4GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GS,residuals=T) 
 appraise(model4GS) 
@@ -135,24 +135,65 @@ theme_set(theme_bw())
 
 
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
+#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 
-model6GSM<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
+ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area ~ organism,scale="free_y") + geom_line() + geom_smooth(se=FALSE) 
+
+#
+
+DETOX2M %>% count(area,codigo) 
+
+
+model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="cc") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
+gam.check(model6GSM)
 plot.gam(model6GSM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSM,residuals=T) 
 appraise(model6GSM) 
 summary(model6GSM) #R-sq.(adj) =  0.153   Deviance explained =   38.8%
 
+# Plot de predicciones de modelo 
+#
+#
+pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
+p1<- predict(model6GSM,newdata=pred, se.fit = TRUE)
+ilink <- family(model6GSM)$linkinv 
 
-model4GSM <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area)
+
+
+## Modelo GI
+
+model4GSM <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
 plot.gam(model4GSM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GSM,residuals=T) 
 appraise(model4GSM) 
 summary(model4GSM) # R-sq.(adj) =  0.218   Deviance explained = 45.4%
+gam.check(model4GSM)
 
+# Plot de predicciones de modelo 
+#
+#
+pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
+p1<- predict(model4GSM,newdata=pred, se.fit = TRUE)
+ilink <- family(model4GSM)$linkinv 
+
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area) + coord_cartesian(ylim=c(0,4000))
+
+
+# NO SE PUEDE COMPARAR CON AIC modelos ajustados con distinto nro de datos
+#
 # Modelos GS filtrados mejillon vs generales (sin filtrar)
-AIC(model6GS,model4GS,model6GSM,model4GSM)# el mas chico es model4GSM filtrado para mejillon
+AIC(model6GS,model4GS)
+AIC(model6GSM,model4GSM)# el mas chico es model4GSM filtrado para mejillon
 
+#************************ HASTA ACA ***************************
 
 ## CHOLGA (A. ater)en areas (BB, BF)-------------------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
