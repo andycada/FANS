@@ -117,16 +117,16 @@ AIC(model4,model6, model4A, model6A) #los modelos sin AC (AR-1) son mejores
 
 model6GS<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs") + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model6GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6GS,residuals=T) 
+draw(model6GS,residuals=T) #K=cantidad de nodos
 appraise(model6GS) 
-summary(model6GS) #R-sq.(adj) =  0.153   Deviance explained =   44%
+summary(model6GS) #R-sq.(adj) =  0.153   Deviance explained =   45.2%
 
 
 model4GS <- gam(STX ~ s(Days, k=10, m=2) + s(Days,by = area, k=10, m=1,bs="fs") + s(Days, by=organism,m=1, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model4GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GS,residuals=T) 
 appraise(model4GS) 
-summary(model4GS) # R-sq.(adj) =  0.218   Deviance explained = 47.5% (mejora el ajuste)
+summary(model4GS) # R-sq.(adj) =  0.218   Deviance explained = 50.8% (mejora el ajuste)
 
 ## Filtros datos totales por especie (paquete tidyverse) y area para ver si mejoran los modelos
 
@@ -150,20 +150,20 @@ gam.check(model6GSM)
 plot.gam(model6GSM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSM,residuals=T) 
 appraise(model6GSM) 
-summary(model6GSM) #R-sq.(adj) =  0.153   Deviance explained =   38.8%
+summary(model6GSM) #R-sq.(adj) =  0.153   Deviance explained =   49.1%
 
 # Plot de predicciones de modelo 
 #
-#
+# pred genera una tabla (tibble) con dias y area (usando los datos de DETOX2M)
 pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
-p1<- predict(model6GSM,newdata=pred, se.fit = TRUE)
+p1<- predict(model6GSM,newdata=pred, se.fit = TRUE) # le dice que prediga a partir del modelo 6GS y q use la nueva tabla pred
 ilink <- family(model6GSM)$linkinv 
 
 pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
 ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
   geom_line(data=pred,aes( x= Days, y= fit )) +  
   geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area)
-
+#los puntos son los datos reales, las lineas la prediccion cn el nuevo set de datos, y el lazo (ribon) el IC?  
 
 ## Modelo GI
 
@@ -171,7 +171,7 @@ model4GSM <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs
 plot.gam(model4GSM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GSM,residuals=T) 
 appraise(model4GSM) 
-summary(model4GSM) # R-sq.(adj) =  0.218   Deviance explained = 45.4%
+summary(model4GSM) # R-sq.(adj) =  0.218   Deviance explained = 49.4%
 gam.check(model4GSM)
 
 # Plot de predicciones de modelo 
@@ -188,56 +188,106 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
 
 
 # NO SE PUEDE COMPARAR CON AIC modelos ajustados con distinto nro de datos
-#
-# Modelos GS filtrados mejillon vs generales (sin filtrar)
-AIC(model6GS,model4GS)
-AIC(model6GSM,model4GSM)# el mas chico es model4GSM filtrado para mejillon
 
-#************************ HASTA ACA ***************************
+
+#************************ HASTA ACA (LEO)***************************
 
 ## CHOLGA (A. ater)en areas (BB, BF)-------------------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
+str(DETOX2A)
 
-model6GSA<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
+## Modelo GS
+
+model6GSA<- gam(STX ~ s(Days, k=10, m=2,bs="cc") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
 plot.gam(model6GSA,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSA,residuals=T) 
 appraise(model6GSA) 
-summary(model6GSA) #R-sq.(adj) =  0.246   Deviance explained = 57.1%
+summary(model6GSA) #R-sq.(adj) =  0.246   Deviance explained = 64.9%
 k.check(model6GSA)#ok
 
-model4GSA <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
-plot.gam(model4GSA,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4GSA,residuals=T) 
-appraise(model4GSA) #R-sq.(adj) =  0.266   Deviance explained = 59.2%
-summary(model4GSA)
+# Plot de predicciones de modelo 
+#
+# pred genera una tabla (tibble) con dias y area (usando los datos de DETOX2M)
+pred <- tibble(Days=rep(seq(from=min(DETOX2A$Days), to=max(DETOX2A$Days)),3), area =rep( unique(DETOX2A$area),each=max(DETOX2A$Days)+1) )
+p1<- predict(model6GSA,newdata=pred, se.fit = TRUE) # le dice que prediga a partir del modelo 6GS y q use la nueva tabla pred
+ilink <- family(model6GSA)$linkinv 
 
-# Modelos GS filtrados cholga vs generales (sin filtrar)
-AIC(model6GS,model4GS,model6GSA,model4GSA) # los modelos filtrados (cholga) son mejores que los globales 
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area)
+
+# no me toma bien las areas que para DETOX2A son solo dos (BBE, BBB)####
+
+## Modelo GI
+
+model4GIA <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2A,family=Gamma(link="log"), method="REML")
+plot.gam(model4GIA,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4GIA,residuals=T) 
+appraise(model4GIA) 
+summary(model4GIA) # R-sq.(adj) =  0.218   Deviance explained = 64.7%
+gam.check(model4GIA)
+
+# Plot de predicciones de modelo 
+#
+#error en tibble
+pred <- tibble(Days=rep(seq(from=min(DETOX2A$Days), to=max(DETOX2A$Days)),3), area =rep( unique(DETOX2A$area),each=max(DETOX2A$Days)+1) )
+p1<- predict(model4GIA,newdata=pred, se.fit = TRUE) # le dice que prediga a partir del modelo 6GS y q use la nueva tabla pred
+ilink <- family(model4GIA)$linkinv 
+
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area)
 
 
 ## BBE 2 Organismos para 1 area ------------------------------------#
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
 
-model6GSBBE<- gam(STX ~ s(Days, k=5, m=2) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
+model6GSBBE<- gam(STX ~ s(Days, k=10, m=2, bs="cc") + s(Days, organism,m=1, k=10, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 plot.gam(model6GSBBE,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSBBE,residuals=T) 
 appraise(model6GSBBE) 
-summary(model6GSBBE) #R-sq.(adj) =  0.153   Deviance explained =   35.7%
+summary(model6GSBBE) #R-sq.(adj) =  0.153   Deviance explained =   43.8%
 k.check(model6GSBBE)
 
-model4GSBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
-plot.gam(model4GSBBE,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4GSBBE,residuals=T) 
-appraise(model4GSBBE) 
-summary(model4GSBBE) #R-sq.(adj) =  0.165   Deviance explained = 43.3%
-k.check(model4GSBBE)
+# Plot de predicciones de modelo 
+#
+# pred genera una tabla (tibble) con dias y area (usando los datos de DETOX2M)
+pred <- tibble(Days=rep(seq(from=min(DETOX2BBE$Days), to=max(DETOX2BBE$Days)),3), organism =rep( unique(DETOX2BBE$organism),each=max(DETOX2BBE$Days)+1) )
+p1<- predict(model6GSBBE,newdata=pred, se.fit = TRUE) # le dice que prediga a partir del modelo 6GS y q use la nueva tabla pred
+ilink <- family(model6GSBBE)$linkinv 
 
-# Modelos GS filtrados para area BBE vs generales (sin filtrar)
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # los modelos filtrados son los mejores  
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2BBE, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~organism)
 
+
+## Modelo GI
+
+model4GIBBE <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=organism, k=10, m=1,bs="fs"), data = DETOX2BBE,family=Gamma(link="log"), method="REML")
+plot.gam(model4GIBBE,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
+draw(model4GIBBE,residuals=T) 
+appraise(model4GIBBE) 
+summary(model4GIBBE) #R-sq.(adj) =  0.165   Deviance explained = 41%
+k.check(model4GIBBE)
+
+
+# Plot de predicciones de modelo 
+#
+pred <- tibble(Days=rep(seq(from=min(DETOX2BBE$Days), to=max(DETOX2BBE$Days)),3), organism =rep( unique(DETOX2BBE$organism),each=max(DETOX2BBE$Days)+1) )
+p1<- predict(model4GIBBE,newdata=pred, se.fit = TRUE) # le dice que prediga a partir del modelo 6GS y q use la nueva tabla pred
+ilink <- family(model4GIBBE)$linkinv 
+
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2BBE, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~organism)
+
+#************************ HASTA ACA (ANDY) ***************************
 
 # Grafico Autocorrelacion
-
 # model6GS
 E <- residuals(model6GS)
 I1 <- !is.na(DETOX2$STX)
@@ -255,7 +305,6 @@ Efull <- NA
 Efull[I1] <- E
 acf(Efull, na.action = na.pass,
     main = "Auto-correlation plot for residuals")
-
 
 # agrego ACF a los modelos 4 y  6 GS
 
