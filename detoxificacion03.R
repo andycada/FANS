@@ -4,15 +4,12 @@
 library(readxl)
 library(mgcv)
 require(gratia)
-
 require(ggplot2)
-
 library(tidyverse)
 require(lubridate)
 
 DETOX2 <- read_excel("Data/DETOX-filtrado.xlsx")
 
-names(DETOX2)
 str(DETOX2)
 DETOX2$area<-as.factor(DETOX2$area)
 DETOX2$organism<-as.factor(DETOX2$organism)
@@ -20,19 +17,9 @@ DETOX2$year<-as.factor(DETOX2$year)## year-F tiene q ser factor para modelo esta
 
 ##############------ Modelos jerarquicos ---------------------------####
 
-## GS (Global)
-model6GS<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs") + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
-draw(model6GS,residuals=T) 
-
-## GI (Global)
-model4GS <- gam(STX ~ s(Days, k=10, m=2) + s(Days,by = area, k=10, m=1,bs="fs") + s(Days, by=organism,m=1, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
-draw(model4GS,residuals=T)
-
-
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 theme_set(theme_bw())
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
-DETOX2M %>% count(area,codigo) 
 
 ##  GS (Mejillon)
 model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="cc") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
@@ -49,14 +36,13 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
   geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area)
 
 ##  GI (Mejillon)
-model4GSM <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
-draw(model4GSM,residuals=T) 
-appraise(model4GSM) 
+model4GIM <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
+draw(model4GIM,residuals=T) 
 
 # Plot (prediccion) 
 pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
-p1<- predict(model4GSM,newdata=pred, se.fit = TRUE)
-ilink <- family(model4GSM)$linkinv 
+p1<- predict(model4GIM,newdata=pred, se.fit = TRUE)
+ilink <- family(model4GIM)$linkinv 
 
 pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
 ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
@@ -67,23 +53,34 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 
 ## GS (Cholga)
-model6GSA<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
+model6GSA<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
 draw(model6GSA,residuals=T) 
 
 ## GI (Cholga)
-model4GSA <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
-draw(model4GSA,residuals=T) 
+model4GIA <- gam(STX ~ s(Days,by = area) + s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
+draw(model4GIA,residuals=T) 
+
+# Plot (prediccion) 
+pred <- tibble(Days=rep(seq(from=min(DETOX2A$Days), to=max(DETOX2A$Days)),3), area =rep( unique(DETOX2A$area),each=max(DETOX2A$Days)+1) )
+p1<- predict(model4GIA,newdata=pred, se.fit = TRUE)
+ilink <- family(model4GIA)$linkinv 
+
+pred <- pred %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
+  geom_line(data=pred,aes( x= Days, y= fit )) +  
+  geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area) + coord_cartesian(ylim=c(0,4000))
+
 
 # BBE 2 Organismos para 1 area ------------------------------------#
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
 
 ## GS
-model6GSBBE<- gam(STX ~ s(Days, k=5, m=2) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
+model6GSBBE<- gam(STX ~ s(Days, k=10, m=2) + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 draw(model6GSBBE,residuals=T) 
 
 ## GI
-model4GSBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
-draw(model4GSBBE,residuals=T) 
+model4GIBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
+draw(model4GIBBE,residuals=T) 
 
 ###############------ Modelos jerarquicos (C/estacionalidad) ---------------------------####
 
@@ -94,15 +91,6 @@ dd <- DETOX2 %>% group_by(area,organism,codigo) %>% summarise(year_ini=min(lubri
 
 DETOX2 <- inner_join(DETOX2,dd) %>% mutate(year_ini=as.factor(year_ini))
 
-## GS (Global)
-
-MGS <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGS, residuals = TRUE)
-
-## GI (global)
-MGI <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGI, residuals = TRUE)
-
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) 
 # Si eliminamos los que tienen pocos datos 
@@ -111,6 +99,7 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 ## GS (Mejillon)
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
+
 
 # Plot (prediccion) 
 #
@@ -128,18 +117,6 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
 #
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-
-# # Plot (prediccion)  
-#
-pred <-distinct(DETOX2M, area,year) %>% group_by(area,year) %>% do(tibble(area=.$area,year=.$year,Days=0:(max(DETOX2M$Days))))
-p1<- predict(MGIM,newdata=pred, se.fit = TRUE) 
-ilink <- family(MGIM)$linkinv 
-
-pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
-ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
-  geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
-  facet_wrap(year~area) 
-
 
 
 ## S (sin smoother global)
@@ -159,6 +136,11 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
   facet_wrap(year_ini~area) 
 
 #Da un poco mejor sin global pero no hay mucha diferencia
+
+## I (sin smoother global)
+
+MGIM <- gam(STX ~ s(Days, by=area, k=10, bs="cc") + s(area, bs="re") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+
 
 # CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
