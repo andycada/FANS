@@ -63,49 +63,6 @@ appraise(model6) # chequea el modelo, residuales, etc
 
 AIC(model2,model3,model4,model5,model6) # modelo 6 y 4 los mejores
 
-## Modelo con autocorrelacion  para ver si mejoran los modelos 6 y 4 ------------------##
-
-str(DETOX2)
-
-# Grafico Autocorrelacion
-
-#model 6
-E <- residuals(model6)
-I1 <- !is.na(DETOX2$STX)
-Efull <- vector(length = length(DETOX2$STX))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
-
-#model4
-E <- residuals(model4)
-I1 <- !is.na(DETOX2$STX)
-Efull <- vector(length = length(DETOX2$STX))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
-
-#Incluyo autocorrelacion AR-1 
-
-model6A<- gam(STX ~ s(Days) + area + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
-plot.gam(model6A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6A,residuals=T) 
-appraise(model6A) 
-summary(model6A)  #R-sq.(adj) =  0.164   Deviance explained = 45.1% aumento la deviance respecto de model 6 (44,7)
-
-
-model4A <- gam(STX ~ s(Days,by = area) + organism, data = DETOX2,family=Gamma (link="log"), correlation = corARMA(form =~ Days))
-plot.gam(model4A,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4A,residuals=T) 
-appraise(model4A) 
-summary(model4A)  #R-sq.(adj) =  0.162   Deviance explained = 49% aumenta respecto de model 4(45.9) 
-
-# no se ve calculo de autocorrelacion pero aumenta la deviance de modelos con AC vs sin AC
-
-AIC(model4,model6, model4A, model6A) #los modelos sin AC (AR-1) son mejores
-
 
 ## Modelos jerarquicos -------------------------------------------------------------##
 
@@ -189,8 +146,9 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
 
 # NO SE PUEDE COMPARAR CON AIC modelos ajustados con distinto nro de datos
 #
-# Modelos GS filtrados mejillon vs generales (sin filtrar)
+# Modelos generales (sin filtrar)
 AIC(model6GS,model4GS)
+# Modelos filtrados 
 AIC(model6GSM,model4GSM)# el mas chico es model4GSM filtrado para mejillon
 
 #************************ HASTA ACA ***************************
@@ -232,55 +190,6 @@ appraise(model4GSBBE)
 summary(model4GSBBE) #R-sq.(adj) =  0.165   Deviance explained = 43.3%
 k.check(model4GSBBE)
 
-# Modelos GS filtrados para area BBE vs generales (sin filtrar)
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # los modelos filtrados son los mejores  
-
-
-# Grafico Autocorrelacion
-
-# model6GS
-E <- residuals(model6GS)
-I1 <- !is.na(DETOX2$STX)
-Efull <- vector(length = length(DETOX2$STX))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
-
-# model4GS
-E <- residuals(model4GS)
-I1 <- !is.na(DETOX2$STX)
-Efull <- vector(length = length(DETOX2$STX))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
-
-
-# agrego ACF a los modelos 4 y  6 GS
-
-model6AGS<- gam(STX ~ s(Days, k=5, m=2) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ 1|area))
-plot.gam(model6AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6AGS,residuals=T) 
-appraise(model6AGS) 
-summary(model6AGS) # no  toma bien la autocorrelacion 
-
-model4AGS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
-plot.gam(model4AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4AGS,residuals=T) 
-appraise(model4AGS) #Deviance explained = 47.5%
-summary(model4AGS) # no  toma bien la autocorrelacion
-
-# ACF anidada en area 
-model4AGS <- gam(STX ~ s(Days,by = area) + s(Days,area, k=5, m=2,bs="fs") + s(Days, organism,m=2, k=5, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days | area))
-plot.gam(model4AGS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model4AGS,residuals=T) 
-appraise(model4AGS) # no toma la autocorrelacion
-summary(model4AGS) 
-
-# Modelos son y sin autocorelacion (A), no esta funcionando la ACF
-AIC(model6GS,model4GS,model6AGS,model4AGS)# mismo AIC con y sin ACF, no toma la autocorrelacion
-
 
 ## GI A single common smoother plus group-level smoothers with differing wiggliness (Model GI)
 
@@ -292,26 +201,6 @@ draw(model6GI,residuals=T) # no lo grafica
 appraise(model6GI) 
 summary(model6GI) # R-sq.(adj) =  0.235   Deviance explained = 49.5%
 
-#Grafico ACF
-E <- residuals(model6GI)
-I1 <- !is.na(DETOX2$STX)
-Efull <- vector(length = length(DETOX2$STX))
-Efull <- NA
-Efull[I1] <- E
-acf(Efull, na.action = na.pass,
-    main = "Auto-correlation plot for residuals")
-
-
-# agrego ACF
-model6AGI<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(Days, by=organism,m=1, k=5, bs="tp") + s(area, bs="re", k=12)+ s(organism, bs="re", k=12), data = DETOX2,family=Gamma (link="log"), method="REML", correlation = corARMA(form =~ Days))
-plot.gam(model6AGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
-draw(model6AGI,residuals=T) # no lo grafica
-appraise(model6AGI) #R-sq.(adj) =  0.235   Deviance explained = 49.5%
-summary(model6AGI) # no toma la autocorrelacion 
-
-# Modelos Gs vs GI con y sin autocorrelacion (no toma la ACF)
-AIC(model6GS,model4GS,model6AGS,model4AGS,model6GI,model6AGI) # GI es mejor que GS pero por una unidad de AIC (3190 vs 3201)
-
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)---------------------#
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 model6GIM<- gam(STX ~ s(Days, k=5, m=2, bs="tp") + s(Days,by=area, k=5, m=1, bs="tp") + s(area, bs="re", k=12), data = DETOX2M,family=Gamma (link="log"), method="REML")
@@ -319,9 +208,6 @@ plot.gam(model6GIM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GIM,residuals=T) #  no grafica 
 appraise(model6GIM) 
 summary(model6GIM) #R-sq.(adj) =  0.191   Deviance explained = 43.1%
-
-# Modelos GI filtrados mejillon vs generales (sin filtrar) 
-AIC(model6GIM,model6GI)# mejor el modelo filtrado para Mejillon (BBE,PP,BBF)
 
 # CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
@@ -340,14 +226,6 @@ draw(model6GIBBE,residuals=T) # no lo grafica
 appraise(model6GIBBE) 
 summary(model6GIBBE) #R-sq.(adj) =  0.154   Deviance explained = 40.8%
 
-# Modelos GI para BBE generales vs fitrados
-AIC(model6GIBBE,model6GI)# mejor el modelo filtrado para area BBE
-
-##RESUMEN DE MODELOS (AIC)
-#Comparacion de modelos GS generales vs fitrados
-AIC(model6GS,model4GS,model6GSM,model4GSM)# (<AIC) mejor el modelo filtrado para Mejillon (datos filtrados, area anidada by)pero 6GSM le siguen por poco 
-AIC(model6GS,model4GS,model6GSA,model4GSA) # mejor modelo filtrado para cholga (model6GSA, model4GSA)
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE) # mejor modelo filtrado por area BBE (model4GSBBE, model6GSBBE)
 
 #comparacion de modelos para mejillon (GS/GI/filtrados)
 AIC(model6GIM,model6GI,model6GS,model4GS,model6GSM,model4GSM) # mejores los modelos filtrados Gs y GI (model4GSM, model6GIM)
@@ -376,7 +254,7 @@ k.check(MGS) ## edf< k y p value no sig p-value (measures remaining pattern in t
 
 AIC(model6GS,model4GS,MGS) # mejor modelo (<AIC) respecto de los anteriores generales (sin filtrar)
 
-#
+
 #################### DESDE ACA LEO
 #
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)--------------------- Modelo GS 
@@ -399,8 +277,8 @@ k.check(MGSM) # ok pero residuales no tan lindos en los extremos
 # smoother va a ser igual al dia 0 en el dia 365, por los datos veo que las curvas no terminan y empiezan igual
 # por eso creo que está bien asi
 #
-
-AIC(model6GS,model4GS,model6GSM,model4GSM,MGS, MGSM) # MGSM es claramente mejor q todos los demas AIC (1909)
+# Comparacion de modelos filtrados para mejillon 
+AIC(model6GSM,model4GSM,MGSM) # MGSM es claramente mejor q todos los demas AIC (1909)
 
 # dan todos significativos !!!!!!!!!!!!!!!1
 # ver que hacer con el termino que da no significativo s(Days, area) !!!!!!!!!!
@@ -457,7 +335,7 @@ summary(MGSA) #R-sq.(adj) =  0.358   Deviance explained = 64.5% todo significati
 k.check(MGSA) #ok
 
 
-AIC(model6GS,model4GS,model6GSA,model4GSA,MGSA)# claramente el AIC baja cn datos filtrados para cholga e inluyendo estacionalidad 
+AIC(model6GSA,model4GSA,MGSA)# claramente el AIC baja cn datos filtrados para cholga e inluyendo estacionalidad 
 
 ## BBE 2 Organismos para 1 area ------------------------------------#
 #zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
@@ -469,7 +347,7 @@ appraise(MGSBBE) # pas mal
 summary(MGSBBE) #R-sq.(adj) =   0.34   Deviance explained = 72.3% 
 k.check(MGSBBE)
 
-AIC(model6GS,model4GS,model6GSBBE,model4GSBBE,MGSBBE) # MGSBBE el mejor 
+AIC(model6GSBBE,model4GSBBE,MGSBBE) # MGSBBE el mejor 
 
 ### GI (siguiendo ejemplo zooplancton)
 
@@ -513,12 +391,11 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
   facet_wrap(year~area) 
 
 
-
 # GS vs GI (con y sin estacionalidad)
 AIC(model6GS,model4GS,MGS,MGI)# MGS, MGI (c/estacionalidad) son mejores 
 
-# GS, GI generales vs filtrados para mejillon, c/ y s/estacionalidad
-AIC(model6GS,model4GS,MGS,MGI, MGSM,MGIM)# MGSM, MGIM (c/estacionalidad y filtrados para mejillon son mejores 
+# GS, GI  filtrados para mejillon, c/ y s/estacionalidad
+AIC(MGSM,MGIM)# MGSM, MGIM (c/estacionalidad y filtrados para mejillon son mejores 
 
 # CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
@@ -540,8 +417,10 @@ appraise(MGIBBE) # pas mal
 summary(MGIBBE) #R-sq.(adj) =  0.358   Deviance explained = 72.3% 
 k.check(MGIBBE)
 
-# modelos generales GS, GI vs filtrados
-AIC(model6GS,model4GS,MGIBBE, MGSBBE) # MGSBBE (filtrado cn estacionalidad) es el mejor 
+
+
+
+
 
 
 ### PRUEBA DATA TRAIN, DATA TEST, FUNCION PREDICT -----------------------------------#
