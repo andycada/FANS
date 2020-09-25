@@ -78,12 +78,17 @@ draw(model6GS,residuals=T)
 appraise(model6GS) 
 summary(model6GS) #R-sq.(adj) =  0.153   Deviance explained =   44%
 
-
+# Este es GI
+#
 model4GS <- gam(STX ~ s(Days, k=10, m=2) + s(Days,by = area, k=10, m=1,bs="fs") + s(Days, by=organism,m=1, k=10, bs="fs"), data = DETOX2,family=Gamma (link="log"), method="REML")
 plot.gam(model4GS,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model4GS,residuals=T) 
 appraise(model4GS) 
 summary(model4GS) # R-sq.(adj) =  0.218   Deviance explained = 47.5% (mejora el ajuste)
+
+
+AIC(model2,model3,model4,model5,model6,model6GS,model4GS) # modelo 6 y 4 los mejores
+
 
 ## Filtros datos totales por especie (paquete tidyverse) y area para ver si mejoran los modelos
 
@@ -242,10 +247,16 @@ AIC(model6GIBBE,model6GI,model6GS,model4GS,model6GSBBE,model4GSBBE)#  mejores mo
 ### GS (siguiendo ejemplo zooplancton)
 #zoo_daph_modGS <- gam(density_adj ~  s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) +s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)),family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
 
+# Agregar año de inicio 
+#
 str(DETOX2)
-DETOX2$year<-as.factor(DETOX2$year)## year-F tiene q ser factor
+require(lubridate)
+dd <- DETOX2 %>% group_by(area,organism,codigo) %>% summarise(year_ini=min(lubridate::year(Date)))
 
-MGS <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+DETOX2 <- inner_join(DETOX2,dd) %>% mutate(year_ini=as.factor(year_ini))
+
+
+MGS <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGS, residuals = TRUE)
 appraise(MGS)
 summary(MGS) #R-sq.(adj) =  0.367   Deviance explained = 59.4%
@@ -258,7 +269,8 @@ AIC(model6GS,model4GS,MGS) # mejor modelo (<AIC) respecto de los anteriores gene
 #################### DESDE ACA LEO
 #
 # MEJILLON (M. edulis) en areas (BBF, BBE, PP)--------------------- Modelo GS 
-DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
+DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) 
+ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) 
 
 # Si eliminamos los que tienen pocos datos 
 #DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
@@ -266,7 +278,7 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 # Ver maximo para knots
 max(DETOX2M$Days)
 
-MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
 appraise(MGSM)
 summary(MGSM) #R-sq.(adj) =  0.439   Deviance explained = 81.3%
@@ -285,14 +297,14 @@ AIC(model6GSM,model4GSM,MGSM) # MGSM es claramente mejor q todos los demas AIC (
 
 # Plot de predicciones de modelo 
 #
-pred <-distinct(DETOX2M, area,year) %>% group_by(area,year) %>% do(tibble(area=.$area,year=.$year,Days=0:(max(DETOX2M$Days))))
+pred <-distinct(DETOX2M, area,year_ini) %>% group_by(area,year_ini) %>% do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2M$Days))))
 p1<- predict(MGSM,newdata=pred, se.fit = TRUE) 
 ilink <- family(MGSM)$linkinv 
 
 pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
 ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
- facet_wrap(year~area) 
+ facet_wrap(year_ini~area) 
 
 
 #
@@ -301,7 +313,7 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +
 
 # Pruebo modelo sin global
 #
-MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
 appraise(MGSM)
 summary(MGSM) #R-sq.(adj) =  0.439   Deviance explained = 81.3%
@@ -309,14 +321,15 @@ k.check(MGSM) # ok pero residuales no tan lindos en los extremos
 
 # Plot de predicciones de modelo 
 #
-pred <-distinct(DETOX2M, area,year) %>% group_by(area,year) %>% do(tibble(area=.$area,year=.$year,Days=0:(max(DETOX2M$Days))))
+pred <-distinct(DETOX2M, area,year_ini) %>% group_by(area,year_ini) %>% do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2M$Days))))
 p1<- predict(MSM,newdata=pred, se.fit = TRUE) 
 ilink <- family(MSM)$linkinv 
 
 pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
 ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX), shape=21,size=0.8) +  theme_bw() + 
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
-  facet_wrap(year~area) 
+  facet_wrap(year_ini~area) 
+
 
 AIC(MSM,MGSM)
 
@@ -353,7 +366,7 @@ AIC(model6GSBBE,model4GSBBE,MGSBBE) # MGSBBE el mejor
 
 #zoo_daph_modGI <- gam(density_adj???s(day, bs="cc", k=10) +s(lake, bs="re") + s(day, by=lake, k=10, bs="cc") + s(lake, year_f, bs="re"), data=daphnia_train, knots=list(day=c(0, 365)), family=Gamma(link ="log"), method="REML", drop.unused.levels=FALSE)
 
-MGI <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGI <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGI, residuals = TRUE)## no grafica 
 plot.gam(MGI,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 appraise(MGI) # los residuales se ven muy bien
@@ -364,8 +377,8 @@ k.check(MGI) #ok
 #
 # No hay suficientes datos 
 #
-DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
-MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
+MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIM, residuals = TRUE) ## no grafica 
 plot.gam(MGIM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 appraise(MGIM) # los residuales se ven bien
