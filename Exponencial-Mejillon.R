@@ -1,9 +1,5 @@
 
-  title: "ToxicAlgae"
-author: "Leonardo A. Saravia"
-
-
-  # Cargo archivo de Eventos toxicos (2005-2017)
+  #  Eventos toxicos (2005-2017)
   
   # Dias: duracion de la veda, T desde q el mejillon supera los 80 µg STX/100 g tejido, hasta que tiene valores por debajo de ese umbral
   # Conc: STXmax concentracion maxima de toxina (STXmax) alcanzada duante el evento toxico
