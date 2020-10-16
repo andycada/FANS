@@ -1,5 +1,9 @@
 # Detoxificacion
 
+work_dir <- "C:/Users/Utilisateur/Documents/GitHub/FANS"
+setwd(work_dir)
+
+
 # Paquetes
 library(readxl)
 library(mgcv)
@@ -238,3 +242,4 @@ draw(MGSBBE, residuals = TRUE)
 ## GI(BBE)
 MGIBBE <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, bs="re") + s(Days, by=organism, k=10, bs="cc")+ s(organism, year, bs="re"),na.action = na.omit,data = DETOX2BBE, knots=list(Days=c(0, 259)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIBBE, residuals = TRUE)
+
