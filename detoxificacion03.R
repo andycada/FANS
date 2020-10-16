@@ -217,13 +217,14 @@ MGIM <- gam(STX ~ s(Days, by=area, k=10, bs="cc") + s(area, bs="re") + s(area, y
 # CHOLGA (A. ater) en areas (BBB, BBE)---------------------#
 DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 max(DETOX2A$Days)
+ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) + scale_color_brewer(palette="Dark2",guide=NULL) 
 
 ## GS (cholga)
-MGSA <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSA <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSA, residuals = TRUE)
 
 ## GI (Cholga)
-MGIA <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGIA <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIA, residuals = TRUE)
 
 ## BBE 2 Organismos para 1 area ------------------------------------#
