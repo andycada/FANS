@@ -1,9 +1,5 @@
 # Detoxificacion
-
-work_dir <- "C:/Users/Utilisateur/Documents/GitHub/FANS"
-setwd(work_dir)
-
-
+#
 # Paquetes
 library(readxl)
 library(mgcv)
