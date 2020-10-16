@@ -32,7 +32,7 @@ ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area
 
 ##  GS (Mejillon)
 
-model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="cc") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
+model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
 draw(model6GSM,residuals=T) 
 
 # GS Plot (prediccion) 
@@ -48,10 +48,14 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
 ggsave("Figures/Medulis_GS_gam.png",width=6,height=4,units="in",dpi=600)
 
 ##  GI (Mejillon)
-model4GIM <- gam(STX ~ s(Days,k=10, m=2, bs="cc") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
+#
+model4GIM <- gam(STX ~ s(Days,k=10, m=2, bs="tp") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
 draw(model4GIM,residuals=T) 
 
+AIC(model4GIM,model6GSM)
+
 #  GI Plot (prediccion) 
+#
 pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
 p1<- predict(model4GIM,newdata=pred, se.fit = TRUE)
 ilink <- family(model4GIM)$linkinv 
@@ -70,18 +74,24 @@ DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area ~ organism,scale="free_y") + geom_point() + geom_smooth(se=FALSE) 
 
 ## GS (Cholga)
+#
 model6GSA<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
 draw(model6GSA,residuals=T) 
+summary(model6GSA)
 
 ## GI (Cholga)
+#
 model4GIA <- gam(STX ~ s(Days,by = area) + s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
 draw(model4GIA,residuals=T) 
-
+summary(model4GIA)
+AIC(model6GSA,model4GIA)
 
 # Plot (prediccion) 
 #                                2 repeticiones porque hay 2 areas --------------->   unique(DETOX2A$area) te dice que hay 2           
 #                                                                         |
-pred <- tibble(Days=rep(seq(from=min(DETOX2A$Days), to=max(DETOX2A$Days)),2), area =rep( unique(DETOX2A$area),each=max(DETOX2A$Days)+1) )
+pred <- tibble(Days= 0:30, area =rep( "BBB",each=31) )
+pred <- bind_rows(pred, tibble(Days=0:259, area =rep( "BBE",each=260) ))
+
 p1<- predict(model6GSA,newdata=pred, se.fit = TRUE)
 ilink <- family(model4GIA)$linkinv 
 
@@ -131,8 +141,11 @@ ggsave("Figures/BBE_GS_gam.png",width=6,height=4,units="in",dpi=600)
 ## GI
 model4GIBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 draw(model4GIBBE,residuals=T) 
-# GI Plot prediccion) 
 
+AIC(model4GIBBE,model6GSBBE)
+
+# GI Plot prediccion) 
+#
 pred <- tibble(Days=rep(seq(from=min(DETOX2BBE$Days), to=max(DETOX2BBE$Days)),2), organism =rep( unique(DETOX2BBE$organism),each=max(DETOX2BBE$Days)+1) )
 p1<- predict(model4GIBBE,newdata=pred, se.fit = TRUE)
 ilink <- family(model4GIBBE)$linkinv 
@@ -187,7 +200,7 @@ ggsave("Figures/Medulis_GS_byYear.png",width=6,height=4,units="in",dpi=600)
 #
 # No hay suficientes datos tenes solo una curva para cada caso 
 #
-MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, by=area,  bs="fs", xt=list(bs="cc")) + s(area, by=year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, by=area,  bs="cc") + s(area, bs="re") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 
 ## S (sin smoother global)
 
@@ -220,12 +233,31 @@ max(DETOX2A$Days)
 ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) + scale_color_brewer(palette="Dark2",guide=NULL) 
 
 ## GS (cholga)
-MGSA <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSA <- gam(STX ~ s(Days, bs="tp", k=20) + s(Days, area, k=10, bs="fs", xt=list(bs="tp"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSA, residuals = TRUE)
-
+summary(MGSA)
 ## GI (Cholga)
-MGIA <- gam(STX ~ s(Days, bs="cc", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="cc") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGIA <- gam(STX ~ s(Days, bs="tp", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="tp") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGIA, residuals = TRUE)
+
+# GS Plot (Cholga) 
+#
+pred <-distinct(DETOX2A, area,year_ini) %>% group_by(area,year_ini) %>% 
+  do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2A$Days))))
+
+p1<- predict(MGSA,newdata=pred, se.fit = TRUE) 
+ilink <- family(MGSA)$linkinv 
+
+pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,size=0.8) +  
+  scale_color_brewer(palette="Dark2",guide=NULL) +  
+  geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
+  facet_wrap(year_ini~area) 
+ggsave("Figures/Aater_GS_byYear.png",width=6,height=4,units="in",dpi=600)
+
+
+
+
 
 ## BBE 2 Organismos para 1 area ------------------------------------#
 DETOX2BBE<- DETOX2 %>% filter(area == "BBE" )
