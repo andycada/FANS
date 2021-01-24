@@ -46,12 +46,14 @@ ggplot(d_sorted, aes(x = Area, y = STX,color=Area)) +
 
 # (Fig 1) Para manuscrito ( STX vs Area, datos totales)----------------------------------#
 theme_set(theme_light(base_size = 10, base_family = "Poppins"))
-ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
+ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "?g STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 
 
 # Fig 2 Box plot (Manuscrito,  season STX, escala log, asterisco p resumir tukey)---------#
 # Escala log (mas medias)
-ggplot(d_sorted, aes(x=season,y=log(data$STX + 0.001),color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + labs(x = NULL , y = expression(PSP~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank()) 
+ggplot(d_sorted, aes(x=season,y=log(data$STX + 0.001),color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + labs(x = NULL , y = expression(log_PSP ~ ("Âµg STX eq"~ 100~ g~ tissue^{-1}))) + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank()) 
+ggsave("Figures/Fig2.png",width=6,height=4,units="in",dpi=600)
+
 ggplot(d_sorted, aes(x=season,y=log(STX),color=season)) + xlab("") + geom_boxplot() + scale_color_viridis_d() + geom_hline(aes(yintercept = 1.903), color = "red", size = 0.6)+ stat_summary(fun = mean, geom = "point", size = 5)+ theme(legend.position = "none",panel.grid = element_blank()) 
 
 # puntos (media y mediana)
@@ -67,7 +69,7 @@ ggplot(d_sorted, aes(x=season,y=STX,color=season)) + xlab("") + geom_jitter() + 
 
 
 # los puntos mas grandes son las medianas o las medias
-# agregar linea sobre los 80 µg: geom_hline(aes(yintercept = world_avg), color = "gray70", size = 0.6)
+# agregar linea sobre los 80 ?g: geom_hline(aes(yintercept = world_avg), color = "gray70", size = 0.6)
 # Agregar mediana: stat_summary(fun = mean, geom = "point", size = 5)
 # geom_jitter(size = 2, alpha = 0.25, width = 0.2) para puntos en vez de cajas 
 
@@ -187,13 +189,15 @@ library(sciplot)
 
 layout(matrix(c(1:2), 2, 1))# graficar primero b y luego a
 
-a<-bargraph.CI(Area, STX, season, data = data, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
+a<-bargraph.CI(Area, STX, season, data = d_sorted, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "Âµg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
 
 #Fig 3b (frecuencia de vedas)
-library(readxl)
-frecuencia_de_vedas <- read_excel("Data/frecuencia de vedas.xlsx")
 
-b<-bargraph.CI(Area, outbrakes, season, data = frecuencia_de_vedas, ylim =c(0,70), xlab = "Area", ylab = "Outbrakes (%)", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = F, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=100,  cex.lab = 1,cex.names = 1)
+frecuencia_de_vedas <- read_excel("Data/frecuencia de vedas.xlsx")
+d_sorted1 <- frecuencia_de_vedas %>%
+  mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
+
+b<-bargraph.CI(Area, outbrakes, season, data = d_sorted1, ylim =c(0,70), xlab = "Area", ylab = "Outbrakes (%)", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = F, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=100,  cex.lab = 1,cex.names = 1)
 
 layout(1)
 
@@ -228,7 +232,7 @@ dunnTest(PP$STX, PP$season, method="bonferroni")# todas sig menos spring autumn 
 # STX vs organism ------------------------------------------------------------------#
 
 # (Fig 3) grafico de barras organismo 
-bargraph.CI(Organism,STX, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, space=0.5,cex.lab = 1.1, x.leg = 1.3,cex.names = 1.3, col = c("red1", "green3"))
+bargraph.CI(Organism,STX, data = data, ylab = expression(PSP ~( "?g STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, space=0.5,cex.lab = 1.1, x.leg = 1.3,cex.names = 1.3, col = c("red1", "green3"))
 
 #cex.lab tamanio de la letra
 
@@ -243,10 +247,10 @@ wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")
 # A ater> Medulis (hip alternativa comprobada)
 
 # (Fig 6) grafico de barras organismo para cd area 
-bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
+bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "?g STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
 
 # (Fig x) alternativa grafico de barras organismo por season  
-bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"),legend = TRUE, x.leg=10, y.leg=500, ncol=1)
+bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "?g STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"),legend = TRUE, x.leg=10, y.leg=500, ncol=1)
 
 
 
@@ -266,7 +270,7 @@ ggplot(d_sorted, aes(x=Area,y=STX,color=Area)) + xlab("") + geom_jitter() + scal
 ggplot(d_sorted, aes(x=STX,color=Area)) + xlab("") + geom_histogram(fill="white", alpha=0.5, position="dodge") + scale_color_viridis_d()
 
 # Barras (mean)
-bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "µg STX eq/100 g tissue", legend = TRUE)
+bargraph.CI(Area, STX, data = M, xlab = "Area", ylab = "?g STX eq/100 g tissue", legend = TRUE)
 
 
 k6<-kruskal.test(STX ~ Area, data = M, na.action=na.fail)
@@ -562,6 +566,42 @@ layout(1)
 
 k11<-kruskal.test(Duration ~ Organism, data = BBE, na.action=na.fail) #p-value = 0.412 No dif sig
 
+
+##HASTA ACA OK#############
+
+library(readxl)
+
+data <- totalR
+data <- read_excel("Data/totalR.xlsx")
+ENSO <- read_excel("Data/ENSO_MEI1990-2020.xlsx")
+SAM  <- read_excel("Data/SAm.xlsx")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # MODELOS LINEALES GENERALIZADOS 
 
 GLM1<-glm(log(Duration) ~ STXmax,family="Gamma",data= data2,na.action=na.fail)
@@ -596,6 +636,21 @@ GLM6<-glm (STX  ~ Area+season+Organism,family="Gamma"(link="log"),data= data,na.
 summary(GLM6) 
 drop1(GLM6, test="F")
 anova(GLM6)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ##-- GAMS exploratorios---------------------------------------------------################################

@@ -32,8 +32,9 @@ ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area
 
 ##  GS (Mejillon)
 
-model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
-draw(model6GSM,residuals=T) 
+model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs")+ s(organism, bs="re", k=12), data = DETOX2M,family=Gamma (link="log"), method="REML")
+draw(model6GSM,residuals=T + theme(legend.position = "right"))
+summary(model6GSM)
 
 # GS Plot (prediccion) 
 pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
@@ -76,8 +77,19 @@ ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_grid( area
 ## GS (Cholga)
 #
 model6GSA<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
-draw(model6GSA,residuals=T) 
+draw(model6GSA,residuals=T) # el smoohter days, area da no significativo
 summary(model6GSA)
+
+# pruebo otros modelos 
+model6GA<- gam(STX ~ s(Days, k=10, m=2), data = DETOX2A,family=Gamma (link="log"), method="REML")
+draw(model6GA,residuals=T) 
+summary(model6GA)
+
+model6SA<- gam(STX ~ s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
+draw(model6SA,residuals=T) 
+summary(model6SA)
+
+AIC(model6GSA,model6GA,model6SA) 
 
 ## GI (Cholga)
 #
@@ -138,11 +150,18 @@ ggplot() + geom_point(data=DETOX2BBE, aes(x = Days, y = STX,color=organism), sha
 ggsave("Figures/BBE_GS_gam.png",width=6,height=4,units="in",dpi=600)
 
 
-## GI
-model4GIBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=10, bs="fs"), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
+## GI (seria mas un I porque no tiene global smoother )
+model4GIBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=10, bs="fs") + s(organism, bs="re", k=12), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 draw(model4GIBBE,residuals=T) 
+ggsave("Figures/BBE_GI_model.png",width=6,height=4,units="in",dpi=600)
+summary(model4GIBBE)
 
-AIC(model4GIBBE,model6GSBBE)
+
+
+##PROBANDO GI con global smoother **lo toma bien pero no grafica
+model4GIBBE2<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days, by=organism,m=1, k=10, bs="tp") + s(organism, bs="re", k=12), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
+draw(model4GIBBE2,residuals=T) # no lo grafica y la prediccion es similar
+AIC(model4GIBBE,model4GIBBE2) # tienen el mismo AIC 
 
 # GI Plot prediccion) 
 #
@@ -174,6 +193,11 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 #DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
 
 ## GS (Mejillon)
+
+#Model GS
+#zoo_daph_modGS <- gam(density_adj ∼ s(day, bs="cc", k=10) + s(day, lake, k=10, bs="fs", xt=list(bs="cc")) + s(lake, year_f, bs="re"),
+# data=daphnia_train, knots=list(day=c(0, 365)), family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
+
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
 
@@ -204,8 +228,12 @@ MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, by=area,  bs="cc") + s(area, 
 
 ## S (sin smoother global)
 
+#zoo_comm_modS <- gam(density_adj ∼ s(taxon, year_f, bs="re") + s(day, taxon, bs="fs", k=10, xt=list(bs="cc")), data=zoo_train, knots=list(day=c(0, 365)), family=Gamma(link="log"), method="REML", drop.unused.levels=FALSE)
+
+
 MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
+ggsave("Figures/MSM_byYear.png",width=6,height=4,units="in",dpi=600)
 
 # Plot (prediccion) 
 #
@@ -220,7 +248,11 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
   facet_wrap(year_ini~area) 
 ggsave("Figures/Medulis_S_byYear.png",width=6,height=4,units="in",dpi=600)
 
-# Da un poco mejor sin global pero no hay mucha diferencia
+summary(MGSM)
+summary(MSM) # mejor este por deviance y AIC
+AIC (MGSM,MSM)
+
+# Da un poco mejor MSM, sin global pero no hay mucha diferencia (es mejor me quedo cn este)
 
 ## I (sin smoother global)
 # No hay datos
@@ -235,10 +267,17 @@ ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area
 ## GS (cholga)
 MGSA <- gam(STX ~ s(Days, bs="tp", k=20) + s(Days, area, k=10, bs="fs", xt=list(bs="tp"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSA, residuals = TRUE)
-summary(MGSA)
-## GI (Cholga)
-MGIA <- gam(STX ~ s(Days, bs="tp", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="tp") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGIA, residuals = TRUE)
+
+
+summary(MGSA) #s(Days,area) NS
+
+# S (cholga)
+MSA <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGSM, residuals = TRUE)
+ggsave("Figures/MSA-byYear.png",width=6,height=4,units="in",dpi=600)
+
+summary(MSA) # es mejor este por la desvianza y el AIC y todos significativos
+AIC (MGSA,MSA)
 
 # GS Plot (Cholga) 
 #
@@ -256,7 +295,27 @@ ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,
 ggsave("Figures/Aater_GS_byYear.png",width=6,height=4,units="in",dpi=600)
 
 
+# S Plot (Cholga) 
+#
+pred <-distinct(DETOX2A, area,year_ini) %>% group_by(area,year_ini) %>% 
+  do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2A$Days))))
 
+p1<- predict(MSA,newdata=pred, se.fit = TRUE) 
+ilink <- family(MSA)$linkinv 
+
+pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
+ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,size=0.8) +  
+  scale_color_brewer(palette="Dark2",guide=NULL) +  
+  geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
+  facet_wrap(year_ini~area) 
+ggsave("Figures/Aater_S_byYear.png",width=6,height=4,units="in",dpi=600)
+
+
+
+
+## GI (Cholga) #no da
+MGIA <- gam(STX ~ s(Days, bs="tp", k=10) + +s(area, bs="re") + s(Days, by=area, k=10, bs="tp") + s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGIA, residuals = TRUE)
 
 
 ## BBE 2 Organismos para 1 area ------------------------------------#
