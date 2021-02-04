@@ -33,8 +33,9 @@ ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area
 ##  GS (Mejillon)
 
 model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs")+ s(organism, bs="re", k=12), data = DETOX2M,family=Gamma (link="log"), method="REML")
-draw(model6GSM,residuals=T + theme(legend.position = "right"))
+draw(model6GSM,residuals=T)
 summary(model6GSM)
+AIC(model6GSM)
 
 # GS Plot (prediccion) 
 pred <- tibble(Days=rep(seq(from=min(DETOX2M$Days), to=max(DETOX2M$Days)),3), area =rep( unique(DETOX2M$area),each=max(DETOX2M$Days)+1) )
@@ -53,7 +54,7 @@ ggsave("Figures/Medulis_GS_gam.png",width=6,height=4,units="in",dpi=600)
 model4GIM <- gam(STX ~ s(Days,k=10, m=2, bs="tp") + s(Days,by=area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma(link="log"), method="REML")
 draw(model4GIM,residuals=T) 
 
-AIC(model4GIM,model6GSM)
+AIC(model4GIM)
 
 #  GI Plot (prediccion) 
 #
@@ -80,7 +81,7 @@ model6GSA<- gam(STX ~ s(Days, k=10, m=2) + s(Days,area, k=10, m=2,bs="fs"), data
 draw(model6GSA,residuals=T) # el smoohter days, area da no significativo
 summary(model6GSA)
 
-# pruebo otros modelos 
+# pruebo otros modelos(G y S) 
 model6GA<- gam(STX ~ s(Days, k=10, m=2), data = DETOX2A,family=Gamma (link="log"), method="REML")
 draw(model6GA,residuals=T) 
 summary(model6GA)
@@ -155,7 +156,7 @@ model4GIBBE <- gam(STX ~ s(Days,by = organism) + s(Days, organism,m=2, k=10, bs=
 draw(model4GIBBE,residuals=T) 
 ggsave("Figures/BBE_GI_model.png",width=6,height=4,units="in",dpi=600)
 summary(model4GIBBE)
-
+AIC(model4GIBBE)
 
 
 ##PROBANDO GI con global smoother **lo toma bien pero no grafica
@@ -201,7 +202,6 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
 
-
 # Plot (prediccion) 
 #
 pred <-distinct(DETOX2M, area,year_ini) %>% group_by(area,year_ini) %>% do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2M$Days))))
@@ -234,6 +234,7 @@ MGIM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, by=area,  bs="cc") + s(area, 
 MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE)
 ggsave("Figures/MSM_byYear.png",width=6,height=4,units="in",dpi=600)
+
 
 # Plot (prediccion) 
 #

@@ -43,13 +43,19 @@ fit <- nls(STX ~ SSasymp(Days, yf, y0, log_alpha), data = expM)
 
 qplot(Days, STX, data = augment(fit)) + geom_line(aes(y = .fitted))
 
-
+# Cholga
 theme_set(theme_bw())
 expA<- exp %>% filter(organism == "A. ater" ) 
 
 fit <- nls(STX ~ SSasymp(Days, yf, y0, log_alpha), data = expA)
 
 qplot(Days, STX, data = augment(fit)) + geom_line(aes(y = .fitted))
+
+
+
+
+
+
 
 
 
