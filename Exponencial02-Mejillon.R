@@ -42,6 +42,7 @@ expM<- exp %>% filter(organism == "M. edulis" )
 fit <- nls(STX ~ SSasymp(Days, yf, y0, log_alpha), data = expM)
 
 qplot(Days, STX, data = augment(fit)) + geom_line(aes(y = .fitted))
+summary(fit)
 
 # Cholga
 theme_set(theme_bw())

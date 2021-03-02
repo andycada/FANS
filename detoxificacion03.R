@@ -235,7 +235,6 @@ MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_i
 draw(MGSM, residuals = TRUE)
 ggsave("Figures/MSM_byYear.png",width=6,height=4,units="in",dpi=600)
 
-
 # Plot (prediccion) 
 #
 pred <-distinct(DETOX2M, area,year_ini) %>% group_by(area,year_ini) %>% do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2M$Days))))
