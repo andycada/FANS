@@ -95,12 +95,15 @@ install.packages("PMCMRplus")
 
 pairwise.wilcox.test(data$STX,data$Area,p.adj="bonferroni") # todas areas sig difernetes excepto BBF y BBB, BBF y PP
 
-install.packages("dunn.test")
-library(dunn.test)
-install.packages("FSA")
-library(FSA)
-dunnTest(data$STX, data$Area, method="bonferroni") # todas las areas son sifg diferentes entre ellas 
-# estos dos test me dan resultados diferents
+# El test the dunn NO LO USAS EN EL PAPER eliminarlo del script
+# 
+#
+# install.packages("dunn.test")
+# library(dunn.test)
+# install.packages("FSA")
+# library(FSA)
+# dunnTest(data$STX, data$Area, method="bonferroni") # todas las areas son sifg diferentes entre ellas 
+# # estos dos test me dan resultados diferents
 
 
 STX <- data$STX + 0.001
