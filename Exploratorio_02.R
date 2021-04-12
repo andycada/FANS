@@ -184,6 +184,7 @@ dunnTest(data2$Duration,data2$season,method="bonferroni") # los unicos diferente
 # PARA COMPARAR CON INFOSTAT KRUSKAL WALLIS STX VS SEASON (PARTICIONADO, FILTRADO SEGUN AREA)
 
 BBE <- data %>% filter(Area == "BBE" )
+warnings()
 
 kruskal.test(STX ~ season, data = BBE, na.action=na.fail)# p-value = 7.916e-14
 pairwise.wilcox.test(BBE$STX,BBE$season,p.adj="bonferroni") #TODAS SIG  DIFERENTES menos spring winter
