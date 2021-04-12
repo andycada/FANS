@@ -113,6 +113,7 @@ plot.gam(model6GSM,residuals=T,pch=1,all.terms=T,seWithMean=T, pages=1)
 draw(model6GSM,residuals=T) 
 appraise(model6GSM) 
 summary(model6GSM) #R-sq.(adj) =  0.153   Deviance explained =   38.8%
+AIC(model6GSM)
 
 # Plot de predicciones de modelo 
 #
