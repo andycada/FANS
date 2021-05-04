@@ -35,7 +35,6 @@ AIC(model6GSM)
 
 # SACANDO EL TERMINO DEL ERROR SI FUNCIONA 
 model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
-gam.check(model6GSM)
 draw(model6GSM,residuals=T) 
 appraise(model6GSM) 
 summary(model6GSM) #R-sq.(adj) =  0.153   Deviance explained =   49.1%
