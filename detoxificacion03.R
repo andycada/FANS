@@ -27,11 +27,6 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(codigo) %>% m
 ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) + scale_color_brewer(palette="Dark2",guide=NULL) 
 
 
-# Model GS: ESTE ES EL DEL PAPER PEDERSEN ET AL 2019 PERO ACA NO FUNCIONA!!!!
-
-model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="cc") + s(Days,area, k=10, m=1,bs="fs")+ s(organism, bs="re", k=12), data = DETOX2M,family=Gamma (link="log"), method="REML")
-draw(model6GSM,residuals=T) # cambie bs=tp por bs=cc pero sigue sin dar, pero en el modelo q sigue sacando el termino del error si parece funcionar
-
 
 # Model GS: SACANDO EL TERMINO DEL ERROR SI FUNCIONA, puse este en el paper 
 model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
@@ -260,8 +255,8 @@ pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fi
 ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,size=0.8) +  
   scale_color_brewer(palette="Dark2",guide=NULL) +  
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
-  facet_wrap(year_ini~area) 
-
+  facet_wrap(year_ini~area)
+ggsave("Figures/Medulis_S_byYear.png",width=6,height=4,units="in",dpi=600)
 
 # MODEL SELECTION
 
