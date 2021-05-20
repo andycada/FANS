@@ -221,13 +221,26 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
 
 # Model GS 
-MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGSM, residuals = TRUE)
-summary(MGSM)
+# MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+# draw(MGSM, residuals = TRUE)
+# summary(MGSM)
 
 
 # Model S 
-MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+# MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+# draw(MSM, residuals = TRUE)
+# summary(MSM) # mejor este por deviance y AIC
+
+#
+# Seasonality uses years_ini 
+#
+
+# Model GS 
+MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area , bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MGSM, residuals = TRUE)
+summary(MGSM)
+# Model S 
+MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s( year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MSM, residuals = TRUE)
 summary(MSM) # mejor este por deviance y AIC
 
@@ -269,13 +282,14 @@ max(DETOX2A$Days)
 ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) + scale_color_brewer(palette="Dark2",guide=NULL) 
 
 # Model GS 
-MGSA <- gam(STX ~ s(Days, bs="tp", k=20) + s(Days, area, k=10, bs="fs", xt=list(bs="tp"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSA <- gam(STX ~ s(Days, bs="tp", k=20) + s(Days, year_ini, k=10, bs="fs",xt=list(bs="cc")),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSA, residuals = TRUE)
 summary(MGSA) # s(Days,area) No Sig
+k.check(MGSA)
 
 # Model S 
-MSA <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGSM, residuals = TRUE)
+MSA <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc")),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+draw(MSA, residuals = TRUE)
 summary(MSA) # todos Significativos
 
 
