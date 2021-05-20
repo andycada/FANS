@@ -129,7 +129,7 @@ pairwise.wilcox.test(data2$Duration,data2$season,p.adj="bonferroni")
 
 
 
-# STX VS SEASON (PARTICIONADO, FILTRADO SEGUN AREA)
+# STX VS SEASON (by AREA)
 
 BBE <- data %>% filter(Area == "BB-E" )
 

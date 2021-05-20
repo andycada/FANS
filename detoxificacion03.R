@@ -223,7 +223,7 @@ DETOX2 <- inner_join(DETOX2,dd) %>% mutate(year_ini=as.factor(year_ini))
 
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) 
 # Si eliminamos los que tienen pocos datos 
-#DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
+DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
 
 # Model GS 
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
@@ -233,7 +233,7 @@ summary(MGSM)
 
 # Model S 
 MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGSM, residuals = TRUE)
+draw(MSM, residuals = TRUE)
 summary(MSM) # mejor este por deviance y AIC
 
 
@@ -261,6 +261,7 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
   scale_color_brewer(palette="Dark2",guide=NULL) +  
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
   facet_wrap(year_ini~area) 
+
 
 # MODEL SELECTION
 
