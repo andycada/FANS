@@ -28,7 +28,7 @@ ggplot(DETOX2M, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area
 
 
 
-# Model GS: SACANDO EL TERMINO DEL ERROR SI FUNCIONA, puse este en el paper 
+# Model GS (*)
 model6GSM<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days,area, k=10, m=1,bs="fs"), data = DETOX2M,family=Gamma (link="log"), method="REML")
 draw(model6GSM,residuals=T) 
 appraise(model6GSM) 
@@ -86,7 +86,7 @@ model6GA<- gam(STX ~ s(Days, k=10, m=2), data = DETOX2A,family=Gamma (link="log"
 draw(model6GA,residuals=T) 
 summary(model6GA)
 
-# Model S (without global smoother)
+# Model S (without global smoother) (*)
 model6SA<- gam(STX ~ s(Days,area, k=10, m=2,bs="fs"), data = DETOX2A,family=Gamma (link="log"), method="REML")
 draw(model6SA,residuals=T) 
 summary(model6SA)
@@ -111,7 +111,7 @@ ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,
   geom_line(data=pred,aes( x= Days, y= fit )) +  
   geom_ribbon(data=pred,aes(x=Days,ymin=lcl,ymax=ucl),alpha=0.3) + facet_wrap(~area) + coord_cartesian(ylim=c(0,4000))
 
-## Model S (PAPER)                                                                     |
+## Model S (*)                                                                     |
 pred <- tibble(Days= 0:30, area =rep( "BB-B",each=31) )
 pred <- bind_rows(pred, tibble(Days=0:259, area =rep( "BB-E",each=260) ))
 
@@ -158,7 +158,7 @@ draw(model4GIBBE,residuals=T)
 summary(model4GIBBE)
 
 
-# Model GI **lo toma bien pero no grafica (PAPER)
+# Model GI (*)
 model4GIBBE2<- gam(STX ~ s(Days, k=10, m=2, bs="tp") + s(Days, by=organism,m=1, k=10, bs="tp") + s(organism, bs="re", k=12), data = DETOX2BBE,family=Gamma (link="log"), method="REML")
 draw(model4GIBBE2,residuals=T) # no lo grafica y la prediccion es similar
 
@@ -220,29 +220,19 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" )
 # Si eliminamos los que tienen pocos datos 
 DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
 
-# Model GS 
-# MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-# draw(MGSM, residuals = TRUE)
-# summary(MGSM)
 
-
-# Model S 
-# MSM <- gam(STX ~  s(Days, area, k=10, bs="fs", xt=list(bs="cc"))+ s(area, year_ini, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-# draw(MSM, residuals = TRUE)
-# summary(MSM) # mejor este por deviance y AIC
-
-#
 # Seasonality uses years_ini 
 #
 
 # Model GS 
 MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area , bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGSM, residuals = TRUE)
+draw(MGSM, residuals = TRUE) #Days, year-ini no sig. 
 summary(MGSM)
-# Model S 
+
+# Model S (*)
 MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s( year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MSM, residuals = TRUE)
-summary(MSM) # mejor este por deviance y AIC
+summary(MSM) 
 
 
 ### PLOT (PREDICTION)
@@ -269,11 +259,11 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
   scale_color_brewer(palette="Dark2",guide=NULL) +  
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
   facet_wrap(year_ini~area)
-ggsave("Figures/Medulis_S_byYear.png",width=6,height=4,units="in",dpi=600)
+
 
 # MODEL SELECTION
 
-AIC (MGSM,MSM) # Da un poco mejor MSM, sin global pero no hay mucha diferencia (es mejor me quedo cn este)
+AIC (MGSM,MSM) # Da un poco mejor MGSM, pero no hay mucha diferencia 
 
 
 ## 3.2. Magellan mussel (A.ater) data
@@ -281,50 +271,6 @@ DETOX2A<- DETOX2 %>% filter(organism == "A. ater" )
 max(DETOX2A$Days)
 ggplot(DETOX2A, aes(x = Days, y = STX,color=area)) + xlab("") + facet_wrap( area ~ year_ini,scale="free_y") + geom_point() + geom_smooth(se=FALSE) + scale_color_brewer(palette="Dark2",guide=NULL) 
 
-# Model GS 
-MGSA <- gam(STX ~ s(Days, bs="tp", k=20) + s(Days, year_ini, k=10, bs="fs",xt=list(bs="cc")),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 218)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MGSA, residuals = TRUE)
-summary(MGSA) # s(Days,area) No Sig
-k.check(MGSA)
+DETOX2A<- DETOX2 %>% filter(organism == "A. ater" ) %>% group_by(year,area) %>% filter( n()>10) %>% ungroup()
 
-# Model S 
-MSA <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc")),na.action = na.omit,data = DETOX2A, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
-draw(MSA, residuals = TRUE)
-summary(MSA) # todos Significativos
-
-
-
-### PLOT (PREDICTION)
-
-## Model GS 
-pred <-distinct(DETOX2A, area,year_ini) %>% group_by(area,year_ini) %>% 
-  do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2A$Days))))
-
-p1<- predict(MGSA,newdata=pred, se.fit = TRUE) 
-ilink <- family(MGSA)$linkinv 
-
-pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
-ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,size=0.8) +  
-  scale_color_brewer(palette="Dark2",guide=NULL) +  
-  geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
-  facet_wrap(year_ini~area) 
-
-
-## Model S
-pred <-distinct(DETOX2A, area,year_ini) %>% group_by(area,year_ini) %>% 
-  do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2A$Days))))
-
-p1<- predict(MSA,newdata=pred, se.fit = TRUE) 
-ilink <- family(MSA)$linkinv 
-
-pred <- pred %>% ungroup() %>% mutate(fit=p1$fit,se.fit =p1$se.fit, ucl=ilink(fit + (1.96 * se.fit)), lcl = ilink(fit - (1.96 * se.fit)), fit=ilink(fit)  )
-ggplot() + geom_point(data=DETOX2A, aes(x = Days, y = STX,color=area), shape=21,size=0.8) +  
-  scale_color_brewer(palette="Dark2",guide=NULL) +  
-  geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
-  facet_wrap(year_ini~area) 
-
-# MODEL SELECTION
-
-AIC (MGSA,MSA)
-
-
+## insufficient data to compare between the two areas 
