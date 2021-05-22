@@ -1,7 +1,14 @@
 
 ## Modelling PSP outbreaks dynamics 
 
-# The codes for sampling areas are PC=Potter Cove AB= Admiral Bay
+# The codes for sampling areas are 
+
+#BB-E: Bahia Brown Entrada
+#BB-B:Bahia Brown Bajo
+#BB-F: Bahia Brown Fondo
+#PP: Punta Parana
+
+#(*) Model selected
 
 library(readxl)
 library(mgcv)
@@ -225,12 +232,12 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>
 #
 
 # Model GS 
-MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area , bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area,bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MGSM, residuals = TRUE) #Days, year-ini no sig. 
 summary(MGSM)
 
 # Model S (*)
-MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s( year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
 draw(MSM, residuals = TRUE)
 summary(MSM) 
 
