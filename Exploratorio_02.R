@@ -26,6 +26,7 @@ d_sorted <- data %>%
 
 # Fig 2
 theme_set(theme_light(base_size = 10, base_family = "Poppins"))
+data <- data %>% bind_rows(tibble(Date=ymd("2014-01-01"),Organism="M. edulis", Area="PP",STX=NA))
 ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 
 
