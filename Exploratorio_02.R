@@ -55,10 +55,9 @@ data$season<-as.factor(data$season)
 shapiro.test(STX) #p-value < 2.2e-16
 shapiro.test(log(STX + 1)) #p-value < 2.2e-16
 
-# homogeneidad de varianzas 
+
 bartlett.test(STX ~ Area, data = data, na.action=na.fail) #p-value < 2.2e-16
 
-# homogeneidad de varianzas (No parametrico)
 fligner.test(STX ~ Area, data = data, na.action=na.fail)
 
 kruskal.test(STX ~ Area, data = data, na.action=na.fail)
@@ -81,10 +80,10 @@ library(dplyr)
  
 # STX vs Season-------------------------------------------------------------------#
 
-# homogeneidad de varianzas 
+
 bartlett.test(STX ~ season, data = data, na.action=na.fail) 
 
-# homogeneidad de varianzas (No parametrico)
+
 fligner.test(STX ~ season, data = data, na.action=na.fail)
 
 
@@ -110,9 +109,6 @@ group_by(data, season) %>%
 library(sciplot)
 
 # Fig 4a
-#bargraph.CI(season, STX, Area, data = data,  xlab = "Season", ylab = "?g STX eq/100 g tissue", col = c("steelblue1", "steelblue4"), legend = TRUE)
-
-#layout(matrix(c(1:2), 2, 1))# graficar primero b y luego a
 
 bargraph.CI(Area, STX, season, data = d_sorted, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
 
@@ -154,14 +150,14 @@ pairwise.wilcox.test(PP$STX,PP$season,p.adj="bonferroni")# todas sig menos sprin
 
 
 
-# STX vs organism #
+# STX vs organism 
 
 bargraph.CI(Organism,STX, data = data, ylab = expression(PSP ~( "?g STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, space=0.5,cex.lab = 1.1, x.leg = 1.3,cex.names = 1.3, col = c("red1", "green3"))
 
 wilcox.test(STX ~ Organism, data = data, exact = FALSE). 
 
 wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")
-# A ater> Medulis (hip alternativa comprobada)
+# A ater> Medulis 
 
 # Fig 6a  
 bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)

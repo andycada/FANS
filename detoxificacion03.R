@@ -232,12 +232,12 @@ DETOX2M<- DETOX2 %>% filter(organism == "M. edulis" ) %>% group_by(year,area) %>
 #
 
 # Model GS 
-MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area,bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MGSM <- gam(STX ~ s(Days, bs="cc", k=10) + s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area,bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML")
 draw(MGSM, residuals = TRUE) #Days, year-ini no sig. 
 summary(MGSM)
 
 # Model S (*)
-MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML", drop.unused.levels=FALSE)
+MSM <- gam(STX ~  s(Days, year_ini, k=10, bs="fs", xt=list(bs="cc"))+ s(year_ini,area, bs="re"),na.action = na.omit,data = DETOX2M, knots=list(Days=c(0, 365)),family=Gamma (link="log"), method="REML")
 draw(MSM, residuals = TRUE)
 summary(MSM) 
 
@@ -256,6 +256,7 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
   facet_wrap(year_ini~area) 
 
 
+
 ## Model S 
 pred <-distinct(DETOX2M, area,year_ini) %>% group_by(area,year_ini) %>% do(tibble(area=.$area,year_ini=.$year_ini,Days=0:(max(DETOX2M$Days))))
 p1<- predict(MSM,newdata=pred, se.fit = TRUE) 
@@ -266,6 +267,7 @@ ggplot() + geom_point(data=DETOX2M, aes(x = Days, y = STX,color=area), shape=21,
   scale_color_brewer(palette="Dark2",guide=NULL) +  
   geom_line(data=pred,aes( x= Days, y= fit )) +  scale_y_log10() +
   facet_wrap(year_ini~area)
+
 
 
 # MODEL SELECTION
