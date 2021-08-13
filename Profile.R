@@ -10,9 +10,20 @@ library("pracma")
 library(tidyverse)
 
 library("akima")
-data <- read_excel("Data/Perfiles.xlsx") #summer 20062007
+data <- read_excel("Data/Perfiles.xlsx") %>% rename( Temp = T)
 
-ggplot(data, aes(x = T, y = Depth,color=Season)) + labs (y = "Depth (m)",x = "Temperature (°C)") + geom_point(size = 1.5) + ylim(rev(c(0, 25))) + xlim(c(8,11)) + facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + geom_smooth(se=FALSE)  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
+dd <- data %>% group_by(Area,Depth) %>% summarise(mT = mean(Temp),n=n(),sdT=sd(Temp), hi = mT+sdT, lo=mT-sdT) 
+
+ggplot(dd, aes(y = mT, x = Depth)) + labs (x = "Depth (m)",y = "Temperature (°C)") + scale_x_reverse() +geom_line(size = 1.5) +  geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.5) +
+  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d()
+
+ggplot(data, aes(y = Temp, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Temperature (°C)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
+  geom_line(data=dd,aes(y=mT,x=Depth),color="black")
+
+
+
+ggplot(data, aes(y = T, x = Depth,color=Season)) + labs (y = "Depth (m)",x = "Temperature (°C)") + geom_point(size = 1.5) + xlim(rev(c(0, 25))) + ylim(c(8,11)) + facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + geom_smooth(se=FALSE)  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
+
 ggplot(data, aes(x = S, y = Depth,color=Season)) + labs (y = "Depth (m)",x = "Salinity (psu)") + geom_point(size = 1.5) + ylim(rev(c(0, 25))) + facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 ggplot(data, aes(x = O2, y = Depth,color=Season)) + labs (y = "Depth (m)",x = "Oxigen (mg/L)") + geom_point(size = 1.5) + ylim(rev(c(0, 25))) + facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 ggplot(data, aes(x = PH, y = Depth,color=Season)) + labs (y = "Depth (m)",x = "pH") + geom_point(size = 1.5) + ylim(rev(c(0, 25))) + facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
