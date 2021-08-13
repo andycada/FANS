@@ -18,7 +18,7 @@ ggplot(dd, aes(y = mT, x = Depth)) + labs (x = "Depth (m)",y = "Temperature (°C
   facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d()
 
 ggplot(data, aes(y = Temp, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Temperature (°C)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
-  geom_line(data=dd,aes(y=mT,x=Depth),color="black")
+  geom_line(data=dd,aes(y=mT,x=Depth),color="red")
 
 
 
