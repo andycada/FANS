@@ -197,9 +197,14 @@ bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PS
 #install.packages("viridis")
 #library(viridis)
 
-ss <- d_sorted %>% group_by(season,Organism) %>% summarise(mS = mean(STX),n=n(),sdS=sd(STX), hi = mS+sdS, lo=mS-sdS) 
-ggplot(ss, aes(y = mS, x = season, color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Season") + geom_col() + scale_fill_continuous(type = "viridis") + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.2) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+ss <- d_sorted %>% group_by(season,Organism) %>% summarise(mS = mean(STX),n=n(),sdS=se(STX), hi = mS+sdS, lo=mS-sdS) 
+ggplot(ss, aes(y = mS, x = season, fill=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Season") + geom_col() + scale_fill_continuous(type = "viridis") + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.2) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
+ggplot(ss, aes(y = mS, x = season, fill=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Season") + geom_bar(stat="identity", position=position_dodge())+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+ 
+
+#ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
+#geom_bar(stat="identity", position=position_dodge())
 
 ## Blue mussel (M. edulis) 
 M <- data %>% filter(Organism == "M. edulis" )
