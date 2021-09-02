@@ -112,6 +112,32 @@ library(sciplot)
 
 bargraph.CI(Area, STX, season, data = d_sorted, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
 
+#ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
+#ggplot(d_sorted, aes(x=Area,y=STX,color=season)) + xlab("") + geom_col(stat = "identity") + scale_fill_continuous(type = "viridis") + labs(x = NULL , y = expression(log_PSP ~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + theme(legend.position = "none",panel.grid = element_blank()) 
+#ggplot(d_sorted, aes(x=Area,y=STX,color=season)) + xlab("") + geom_bar(stat = "count") + scale_fill_continuous(type = "viridis") + labs(x = NULL , y = expression(log_PSP ~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + theme(legend.position = "none",panel.grid = element_blank()) 
+
+#sSTX <- d_sorted %>% group_by(season,Organism) %>% summarise(mSTX = mean(STX),n=n(),sdSTX=sd(STX), hi = mSTX+sdSTX, lo=mSTX-sdSXT) 
+#ggplot(sSTX, aes(y = mSTX, x = season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_line(size = 1.5) +  geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.5) +
+#  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d()
+
+#ggplot(data, aes(y = S, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
+  geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
+
+
+  
+#facet_wrap(~ season, nrow = NULL, ncol = 4L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
+
+#IrisPlot <- ggplot(Iris_summary, aes(Species, mean_PL)) 
+#geom_col() + 
+#geom_errorbar(aes(ymin = mean_PL - sd_PL, ymax = mean_PL + sd_PL), width=0.2)
+#+ geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.2)
+
+ggplot(data, aes(y = S, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
+  geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
+
+
+#geom_bar(stat = "identity") + scale_fill_continuous(type = "viridis")
+
 
 #Fig 4b (Duration)
 data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
@@ -120,6 +146,8 @@ d_sorted1 <- data2 %>%
   mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
 bargraph.CI(Area,Duration,season, data = d_sorted1, ylab = "Duration (days)", xlab = "Area", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=150,  cex.lab = 1,cex.names = 1)
+
+colours()
 
 kruskal.test(Duration ~ season, data = data2, na.action=na.fail)
 pairwise.wilcox.test(data2$Duration,data2$season,p.adj="bonferroni")
@@ -160,10 +188,17 @@ wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")
 # A ater> Medulis 
 
 # Fig 6a  
-bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
+bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
 
 # Fig 6b   
-bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("red1", "green3"),legend = F, x.leg=10, y.leg=500, ncol=1)
+bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"),legend = F, x.leg=10, y.leg=500, ncol=1)
+
+#colours()
+#install.packages("viridis")
+#library(viridis)
+
+ss <- d_sorted %>% group_by(season,Organism) %>% summarise(mS = mean(STX),n=n(),sdS=sd(STX), hi = mS+sdS, lo=mS-sdS) 
+ggplot(ss, aes(y = mS, x = season, color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Season") + geom_col() + scale_fill_continuous(type = "viridis") + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.2) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
 
 ## Blue mussel (M. edulis) 
