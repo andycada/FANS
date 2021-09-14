@@ -29,12 +29,13 @@ d_sorted <- data %>%
 
 # Fig 2
 theme_set(theme_light(base_size = 10, base_family = "Poppins"))
-data <- data %>% bind_rows(tibble(Date=ymd("2014-01-01"),Organism="M. edulis", Area="PP",STX=NA))
+data <- data %>% mutate(Date=as_date(Date)) %>%  bind_rows(tibble(Date=ymd("2014-01-01"),Organism="M. edulis", Area="PP",STX=NA))
 # ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.8) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +   theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 
 G1 <- data %>% filter(Area == "BB-B" ) %>% 
-  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) +
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) + 
+  coord_cartesian(xlim=c(ymd("2005-01-01"),ymd("2020-01-01")),expand=FALSE) +
   scale_y_continuous(limits = c(0, 300))+theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "none", panel.grid = element_blank()) 
 
 G2 <- data %>% filter(Area == "BB-E" ) %>% 
