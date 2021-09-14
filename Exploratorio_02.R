@@ -10,6 +10,7 @@
 library(readxl)
 library(ggplot2)
 library(cowplot)
+library(lubridate)
 data <- read_excel("Data/totalR.xlsx")
 
 
@@ -29,27 +30,38 @@ d_sorted <- data %>%
 # Fig 2
 theme_set(theme_light(base_size = 10, base_family = "Poppins"))
 data <- data %>% bind_rows(tibble(Date=ymd("2014-01-01"),Organism="M. edulis", Area="PP",STX=NA))
-#ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.8) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="fixed") +   theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
+# ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.8) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +   theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 
-G1 <- data %>% filter(Area == "BB-B" )
-ggplot(G1, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +
+G1 <- data %>% filter(Area == "BB-B" ) %>% 
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) +
   scale_y_continuous(limits = c(0, 300))+theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "none", panel.grid = element_blank()) 
 
-G2 <- data %>% filter(Area == "BB-E" )
-ggplot(G2, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +
+G2 <- data %>% filter(Area == "BB-E" ) %>% 
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y =expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) +
   scale_y_continuous(limits = c(0, 5000))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
-G3 <- data %>% filter(Area == "BB-F" )
-ggplot(G3, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +
+G3 <- data %>% filter(Area == "BB-F" ) %>% 
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})) , x=NULL) + geom_line(size = 0.7) +
   scale_y_continuous(limits = c(0, 1500))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
-G4 <- data %>% filter(Area == "PP" )
-ggplot(G4, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +
+G4 <- data %>% filter(Area == "PP" ) %>%
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x = "Year") + geom_line(size = 0.7) +
   scale_y_continuous(limits = c(0, 5000))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 
-plot_grid(G1, G2,G3,G4,labels = c('A','B','C','D'), nrow = 4,ncol = 1, label_size = 12)
+pg <- plot_grid(G1 + theme(legend.position="none"),
+          G2 + theme(legend.position="none"),
+          G3 + theme(legend.position="none"),
+          G4 + theme(legend.position="none"),labels = c('A','B','C','D'), nrow = 4,ncol = 1, label_size = 12)
+
+legend <- get_legend(
+  G2 + guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom")
+) 
+
+pg <- plot_grid(pg, legend, ncol = 1, rel_heights = c(1, .1)) 
+pg
 
 
 
