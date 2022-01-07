@@ -14,6 +14,37 @@ data <- read_excel("Data/Perfiles.xlsx") %>% rename( Temp = T)
 
 dd <- data %>% group_by(Area,Depth) %>% summarise(mT = mean(Temp),n=n(),sdT=sd(Temp), hi = mT+sdT, lo=mT-sdT) 
 
+####porbando hacer anovas de perfiles (MOVER A OTRO LADO LUEGO)
+data <- read_excel("Data/anova_perfiles.xlsx") %>% rename( Temp = T)
+
+dd <- data %>% group_by(Area,Season) %>% summarise(mT = mean(Temp),n=n(),sdT=sd(Temp), hi = mT+sdT, lo=mT-sdT) 
+ss <- data %>% group_by(Area,Season) %>% summarise(mS = mean(S),n=n(),sdS=sd(S), hi = mS+sdS, lo=mS-sdS) 
+
+
+#Normalidad
+shapiro.test(dd$mT) #p-value 0.3645 datos son normales
+shapiro.test(ss$mS) #p-value = 0.2679
+             
+# homogeneidad de varianzas 
+bartlett.test(STX ~ Area, data = data, na.action=na.fail) #p-value < 2.2e-16
+
+# homogeneidad de varianzas (No parametrico)
+fligner.test(STX ~ Area, data = data, na.action=na.fail)
+
+k1<-kruskal.test(STX ~ Area, data = data, na.action=na.fail)
+
+a1<-aov(dd$mT ~ Area * Season, data = dd)
+summary(a1)
+
+summer <- dd %>% filter(Season == "summer" )
+a3<-aov(summer$mT ~ Area, data = summer)
+summary(a3)
+
+a2<-aov(ss$mS ~ Area * Season, data = ss)
+summary(a2)
+
+#################
+
 ggplot(dd, aes(y = mT, x = Depth)) + labs (x = "Depth (m)",y = "Temperature (°C)") + scale_x_reverse() +geom_line(size = 1.5) +  geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.5) +
   facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d()
 

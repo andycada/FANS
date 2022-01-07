@@ -33,38 +33,40 @@ data <- data %>% mutate(Date=as_date(Date)) %>%  bind_rows(tibble(Date=ymd("2014
 # ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.8) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +   theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 
+
 G1 <- data %>% filter(Area == "BB-B" ) %>% 
-  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) + 
-  coord_cartesian(xlim=c(ymd("2005-01-01"),ymd("2020-01-01")),expand=FALSE) +
-  scale_y_continuous(limits = c(0, 300))+theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "none", panel.grid = element_blank()) 
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=NULL, x=NULL) + geom_line(size = 0.7) + 
+  coord_cartesian(xlim=c(ymd("2004-06-30"),ymd("2020-06-30")),expand=FALSE) +
+  scale_y_continuous(limits = c(0, 350))+theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "none", panel.grid = element_blank()) 
 
 G2 <- data %>% filter(Area == "BB-E" ) %>% 
-  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y =expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x=NULL) + geom_line(size = 0.7) +
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y = NULL, x=NULL) + geom_line(size = 0.7) +
+  coord_cartesian(xlim=c(ymd("2004-06-30"),ymd("2020-06-30")),expand=FALSE)+
   scale_y_continuous(limits = c(0, 5000))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 G3 <- data %>% filter(Area == "BB-F" ) %>% 
-  ggplot( aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})) , x=NULL) + geom_line(size = 0.7) +
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs (y = NULL , x=NULL) + geom_line(size = 0.7) +
+  coord_cartesian(xlim=c(ymd("2004-06-30"),ymd("2020-06-30")),expand=FALSE) +
   scale_y_continuous(limits = c(0, 1500))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 G4 <- data %>% filter(Area == "PP" ) %>%
-  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), x = "Year") + geom_line(size = 0.7) +
+  ggplot( aes(x = Date, y = STX,color=Organism)) + labs(y=NULL, x = "Year") + geom_line(size = 0.7) +
+  coord_cartesian(xlim=c(ymd("2004-06-30"),ymd("2020-06-30")),expand=FALSE)+
   scale_y_continuous(limits = c(0, 5000))+ theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.position = "top", panel.grid = element_blank()) 
 
 
 pg <- plot_grid(G1 + theme(legend.position="none"),
           G2 + theme(legend.position="none"),
           G3 + theme(legend.position="none"),
-          G4 + theme(legend.position="none"),labels = c('A','B','C','D'), nrow = 4,ncol = 1, label_size = 12)
+          G4 + theme(legend.position="none"), nrow = 4,ncol = 1)
 
 legend <- get_legend(
   G2 + guides(color = guide_legend(nrow = 1)) +
-    theme(legend.position = "bottom")
+    theme(legend.position = "top")
 ) 
 
 pg <- plot_grid(pg, legend, ncol = 1, rel_heights = c(1, .1)) 
 pg
-
-
 
 
 # Fig 3 
@@ -147,35 +149,26 @@ library(sciplot)
 
 # Fig 4a
 
-bargraph.CI(Area, STX, season, data = d_sorted, ylim =c(0,900), xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.6, y.leg=850, cex.lab = 1,cex.names = 1)
-
 ss <- d_sorted %>% group_by(Area,season) %>% summarise(mS = mean(STX),n=n(),sdS=se(STX), hi = mS+sdS, lo=mS-sdS) 
-ggplot(ss, aes(y = mS, x = Area, fill=season)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Area") + scale_y_continuous(limits = c(0, 650))+ geom_bar(stat="identity", position=position_dodge())+ scale_color_viridis_d() + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+G1<- ggplot(ss, aes(y = mS, x = Area, fill=season)) + labs (y = NULL,x = NULL) + scale_y_continuous(limits = c(0, 650))+ geom_bar(stat="identity", position=position_dodge())+ scale_color_viridis_d() + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
 #scale_y_continuous(limits = c(0, 90))
-
 #ggplot(data, aes(x = Date, y = STX,color=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Year") + geom_line(size = 0.7) +  facet_wrap(~ Area, nrow = 4, ncol = NULL,scale="free_y") +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
 #ggplot(d_sorted, aes(x=Area,y=STX,color=season)) + xlab("") + geom_col(stat = "identity") + scale_fill_continuous(type = "viridis") + labs(x = NULL , y = expression(log_PSP ~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + theme(legend.position = "none",panel.grid = element_blank()) 
 #ggplot(d_sorted, aes(x=Area,y=STX,color=season)) + xlab("") + geom_bar(stat = "count") + scale_fill_continuous(type = "viridis") + labs(x = NULL , y = expression(log_PSP ~ ("µg STX eq"~ 100~ g~ tissue^{-1}))) + theme(legend.position = "none",panel.grid = element_blank()) 
-
 #sSTX <- d_sorted %>% group_by(season,Organism) %>% summarise(mSTX = mean(STX),n=n(),sdSTX=sd(STX), hi = mSTX+sdSTX, lo=mSTX-sdSXT) 
 #ggplot(sSTX, aes(y = mSTX, x = season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_line(size = 1.5) +  geom_ribbon(aes(ymin=lo,ymax=hi),alpha=0.5) +
 #  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d()
-
 #ggplot(data, aes(y = S, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
-  geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
-
-
-  
+ # geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
 #facet_wrap(~ season, nrow = NULL, ncol = 4L,scale="free_y") + coord_flip()+theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) 
-
 #IrisPlot <- ggplot(Iris_summary, aes(Species, mean_PL)) 
 #geom_col() + 
 #geom_errorbar(aes(ymin = mean_PL - sd_PL, ymax = mean_PL + sd_PL), width=0.2)
 #+ geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.2)
 
-ggplot(data, aes(y = S, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
-  geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
+#ggplot(data, aes(y = S, x = Depth,color=Season)) + labs (x = "Depth (m)",y = "Salinity (psu)") + scale_x_reverse() +geom_point(size = 1.5) +  facet_wrap(~ Area, nrow = NULL, ncol = 3L,scale="free_y") + coord_flip()  +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank()) + scale_color_viridis_d() + 
+#  geom_line(data=ss,aes(y=mS,x=Depth),color="blue",size=2)
 
 
 #geom_bar(stat = "identity") + scale_fill_continuous(type = "viridis")
@@ -187,15 +180,28 @@ data2 <- read_excel("Data/eventos toxicos y duracion.xlsx")
 d_sorted1 <- data2 %>%
   mutate(season = fct_relevel(season,c("summer","autumn","winter", "spring")))
 
-bargraph.CI(Area,Duration,season, data = d_sorted1, ylab = "Duration (days)", xlab = "Area", col = c("violetred4", "steelblue3","seagreen4","yellow"),legend = T, cex.leg= 0.9, ncol=1, x.leg=0.3, y.leg=150,  cex.lab = 1,cex.names = 1)
-
 ss <- d_sorted1 %>% group_by(Area,season) %>% summarise(mS = mean(Duration),n=n(),sdS=se(Duration), hi = mS+sdS, lo=mS-sdS) 
-ggplot(ss, aes(y = mS, x = Area, fill=season)) + labs (y = "Duration(days)",x = "Area") + geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +scale_y_continuous(limits = c(0, 180))+ scale_color_viridis_d() + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+G2 <-ggplot(ss, aes(y = mS, x = Area, fill=season)) + labs (y = NULL,x = "Area") + geom_col(position = position_dodge2(width = 0.9, preserve = "single")) +scale_y_continuous(limits = c(0, 180))+ scale_color_viridis_d() + geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
 #geom_col(position = position_dodge2(width = 0.9, preserve = "single"))
 
 kruskal.test(Duration ~ season, data = data2, na.action=na.fail)
 pairwise.wilcox.test(data2$Duration,data2$season,p.adj="bonferroni")
+
+### ubicar todos juntos 
+pg <- plot_grid(G1 + theme(legend.position="none"),
+                G2 + theme(legend.position="none"), nrow = 2,ncol = 1)
+
+legend <- get_legend(
+  G2 + guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "top", panel.grid = element_blank())
+) 
+
+pg <- plot_grid(pg, legend, ncol = 1,rel_heights = c(1, .1)) 
+pg
+
+
+
 
 
 
@@ -233,25 +239,41 @@ wilcox.test(STX ~ Organism, data = data, exact = FALSE, alternative = "greater")
 # A ater> Medulis 
 
 # Fig 6a  
-bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
+#bargraph.CI(Area,STX,Organism, data = data, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), xlab = NA, cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"), legend=T,  x.leg=9, y.leg=200, ncol=1)
 
 ss <- d_sorted %>% group_by(Area,Organism) %>% summarise(mS = mean(STX),n=n(),sdS=se(STX), hi = mS+sdS, lo=mS-sdS) 
 #ggplot(ss, aes(y = mS, x = Area, fill=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Area") + geom_bar(stat="identity", position=position_dodge())+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
-ggplot(ss, aes(y = mS, x = Area, fill=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Area") + geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) + theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+G1 <-ggplot(ss, aes(y = mS, x = Area, fill=Organism)) + labs (y = NULL,x = "Area") + geom_col(position = position_dodge2(width = 0.9, preserve = "single"))+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) + theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) + theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
 
 #geom_col(position = position_dodge2(width = 0.9, preserve = "single")) 
 
 # Fig 6b   
-bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"),legend = F, x.leg=10, y.leg=500, ncol=1)
+#bargraph.CI(season, STX, Organism, data = data,  xlab = NA, ylab = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})), cex.lab = 1.1,cex.names = 1.25,col = c("violetred4", "aquamarine3"),legend = F, x.leg=10, y.leg=500, ncol=1)
 
 #colours()
 #install.packages("viridis")
 #library(viridis)
 
 ss <- d_sorted %>% group_by(season,Organism) %>% summarise(mS = mean(STX),n=n(),sdS=se(STX), hi = mS+sdS, lo=mS-sdS) 
-ggplot(ss, aes(y = mS, x = season, fill=Organism)) + labs (y = expression(PSP ~( "µg STX eq"~ 100~ g~ tissue^{-1})),x = "Season") + scale_y_continuous(limits = c(0, 580))+geom_bar(stat="identity", position=position_dodge())+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+G2<- ggplot(ss, aes(y = mS, x = season, fill=Organism)) + theme(legend.text = element_text(face = c(rep("italic", 5), rep("plain", 5)))) +labs (y = NULL,x = "Season") + scale_y_continuous(limits = c(0, 580))+geom_bar(stat="identity", position=position_dodge())+geom_errorbar(aes(ymin = mS - sdS, ymax = mS + sdS), width=0.9, stat="identity", position=position_dodge()) +theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
  
+
+### ubicar todos juntos 
+pg <- plot_grid(G1 + theme(legend.position="none"),
+                G2 + theme(legend.position="none"), nrow = 2,ncol = 1)
+
+legend <- get_legend(
+  G2 + guides(color = guide_legend(nrow = 1)) +
+    theme(legend.position = "top", panel.grid = element_blank())
+) 
+
+pg <- plot_grid(pg, legend, ncol = 1,rel_heights = c(1, .1)) 
+pg
+
+
+#theme(legend.title=NULL,legend.position = "top", panel.grid = element_blank())
+#pg <- plot_grid(pg, legend, ncol = 1,labels = c("a)","b)"),label_size = 12, label_y= 0.55, rel_heights = c(1, .1)) 
 
 #ggplot(data=df2, aes(x=dose, y=len, fill=supp)) +
 #geom_bar(stat="identity", position=position_dodge())
